@@ -9,7 +9,8 @@ function createWindow(): void {
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: false,
+    autoHideMenuBar: true,
+    frame: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -17,7 +18,39 @@ function createWindow(): void {
     }
   })
 
+  ipcMain.on('window-minimize', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.minimize()
+    }
+  })
+
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize()
+      } else {
+        mainWindow.maximize()
+      }
+    }
+  })
+
+  ipcMain.on('window-close', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.close()
+    }
+  })
+
+  ipcMain.handle('window-state', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      return {
+        isMaximized: mainWindow.isMaximized()
+      }
+    }
+    return { isMaximized: false }
+  })
+
   mainWindow.on('ready-to-show', () => {
+    mainWindow.maximize()
     mainWindow.show()
   })
 
@@ -59,6 +92,12 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+
+
+ipcMain.on('close-app', () => {
+  app.quit();
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

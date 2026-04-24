@@ -128,3 +128,12 @@
     @apply font-sans;
     }
 }
+
+@layer utilities {
+  .top-bar {
+    -webkit-app-region: drag;
+  }
+  .btn-top {
+    -webkit-app-region: no-drag;
+  }
+}
