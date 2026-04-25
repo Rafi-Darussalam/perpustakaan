@@ -8,14 +8,18 @@ import {
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton
+  SidebarMenuButton,
+  useSidebar
 } from '@/components/ui/sidebar'
 import { ModeToggle } from '../mode-toggle'
 import { Avatar, AvatarImage, AvatarFallback } from './avatar'
 
 import { NavLink } from 'react-router-dom'
 
-import { Home, Book } from 'lucide-react'
+import { Home, Book, FileText } from 'lucide-react'
+
+import { CollapsibleNav } from './sidebar-collapsible'
+import { DropdownNav } from './sidebar-dropdown'
 
 const iconComponents = {
   Home: Home,
@@ -24,12 +28,27 @@ const iconComponents = {
 
 const pages = [
   { page: '/', text: 'Home', icon: 'Home' },
-  { page: '/manajemen-buku', text: 'Manajemen Buku', icon: 'Book' }
+]
+
+const collapsibleItems = [
+  {
+    icon: FileText,
+    label: 'Manajemen',
+    children: [
+      { to: '/manajemen-buku', label: 'Buku' },
+      { to: '/manajemen-anggota', label: 'Anggota' },
+      { to: '/manajemen-pinjaman', label: 'Pinjaman' },
+      { to: '/manajemen-pengembalian', label: 'Pengembalian' },
+    ],
+  },
 ]
 
 import Logo from '@/assets/img/Logo.png'
 
 export function AppSidebar() {
+  const { state } = useSidebar()
+  const isCollapsed = state === 'collapsed'
+
   return (
     <Sidebar collapsible="icon" className="sticky top-0 left-0">
       <SidebarHeader className="relative">
@@ -37,8 +56,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" className="top-bar hover:bg-transparent">
               <div>
-                <Avatar className='after:border-none'>
-                  <AvatarImage src={Logo} className='rounded-lg' />
+                <Avatar className="after:border-none">
+                  <AvatarImage src={Logo} className="rounded-lg" />
                   <AvatarFallback>Lm</AvatarFallback>
                 </Avatar>
                 <span>Library Management</span>
@@ -60,7 +79,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={i}>
                     <NavLink to={page}>
                       {({ isActive }) => (
-                        <SidebarMenuButton asChild data-active={isActive} tooltip={text}
+                        <SidebarMenuButton
+                          asChild
+                          data-active={isActive}
+                          tooltip={text}
                           className="data-[active=true]:text-chart-2"
                         >
                           <div className="flex items-center gap-2">
@@ -73,6 +95,13 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 )
               })}
+
+              <SidebarMenuItem>
+                {isCollapsed
+                  ? <DropdownNav items={collapsibleItems} />
+                  : <CollapsibleNav items={collapsibleItems} />
+                }
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -80,7 +109,7 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuButton asChild size='lg'>
+          <SidebarMenuButton asChild size="lg">
             <div>
               <ModeToggle />
               <span>Tema</span>
