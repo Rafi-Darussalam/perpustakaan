@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton
 } from '@/components/ui/sidebar'
-
+import { ModeToggle } from '../mode-toggle'
 import { Avatar, AvatarImage, AvatarFallback } from './avatar'
 
 import { NavLink } from 'react-router-dom'
@@ -27,17 +27,19 @@ const pages = [
   { page: '/manajemen-buku', text: 'Manajemen Buku', icon: 'Book' }
 ]
 
+import Logo from '@/assets/img/Logo.png'
+
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="sticky top-0 left-0">
-      <SidebarHeader>
+      <SidebarHeader className="relative">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size='lg'>
+            <SidebarMenuButton asChild size="lg" className="top-bar hover:bg-transparent">
               <div>
-                <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>LM</AvatarFallback>
+                <Avatar className='after:border-none'>
+                  <AvatarImage src={Logo} className='rounded-lg' />
+                  <AvatarFallback>Lm</AvatarFallback>
                 </Avatar>
                 <span>Library Management</span>
               </div>
@@ -45,7 +47,6 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
@@ -59,7 +60,9 @@ export function AppSidebar() {
                   <SidebarMenuItem key={i}>
                     <NavLink to={page}>
                       {({ isActive }) => (
-                        <SidebarMenuButton asChild data-active={isActive} tooltip={text}>
+                        <SidebarMenuButton asChild data-active={isActive} tooltip={text}
+                          className="data-[active=true]:text-chart-2"
+                        >
                           <div className="flex items-center gap-2">
                             {IconComponent && <IconComponent />}
                             <span>{text}</span>
@@ -75,7 +78,16 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter />
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuButton asChild size='lg'>
+            <div>
+              <ModeToggle />
+              <span>Tema</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }
