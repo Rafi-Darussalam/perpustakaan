@@ -35,10 +35,10 @@ const collapsibleItems = [
     icon: FileText,
     label: 'Manajemen',
     children: [
-      { to: '/manajemen-buku', label: 'Buku' },
-      { to: '/manajemen-anggota', label: 'Anggota' },
-      { to: '/manajemen-pinjaman', label: 'Pinjaman' },
-      { to: '/manajemen-pengembalian', label: 'Pengembalian' },
+      { to: '/manajemen-buku', label: 'Buku Perpustakaan' },
+      { to: '/manajemen-anggota', label: 'Anggota Perpustakaan' },
+      { to: '/manajemen-pinjaman', label: 'Pinjaman Buku' },
+      { to: '/manajemen-pengembalian', label: 'Pengembalian Buku' },
     ],
   },
 ]
