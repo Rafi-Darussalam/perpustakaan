@@ -1,6 +1,10 @@
 import AddBook from "./FormAddBook"
 
-export default function ManajemenBukuTitle() {
+type ManajemenBukuTitleProps = {
+  onSuccess: () => void
+}
+
+export default function ManajemenBukuTitle({ onSuccess }: ManajemenBukuTitleProps) {
   return (
     <div className="flex justify-between items-center">
       <div>
@@ -8,7 +12,7 @@ export default function ManajemenBukuTitle() {
         <p className="text-muted-foreground">Kelola semua koleksi buku perpustakaan.</p>
       </div>
       <div>
-        <AddBook />
+        <AddBook onSuccess={onSuccess} />
       </div>
     </div>
   )

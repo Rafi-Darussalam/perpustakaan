@@ -26,9 +26,7 @@ const iconComponents = {
   Book: Book
 }
 
-const pages = [
-  { page: '/', text: 'Home', icon: 'Home' },
-]
+const pages = [{ page: '/', text: 'Home', icon: 'Home' }]
 
 const collapsibleItems = [
   {
@@ -38,9 +36,9 @@ const collapsibleItems = [
       { to: '/manajemen-buku', label: 'Buku Perpustakaan' },
       { to: '/manajemen-anggota', label: 'Anggota Perpustakaan' },
       { to: '/manajemen-pinjaman', label: 'Pinjaman Buku' },
-      { to: '/manajemen-pengembalian', label: 'Pengembalian Buku' },
-    ],
-  },
+      { to: '/manajemen-pengembalian', label: 'Pengembalian Buku' }
+    ]
+  }
 ]
 
 import Logo from '@/assets/img/Logo.png'
@@ -83,7 +81,7 @@ export function AppSidebar() {
                           asChild
                           data-active={isActive}
                           tooltip={text}
-                          className="data-[active=true]:text-chart-2"
+                          className="data-[active=true]:text-chart-2 transition-colors"
                         >
                           <div className="flex items-center gap-2">
                             {IconComponent && <IconComponent />}
@@ -97,10 +95,11 @@ export function AppSidebar() {
               })}
 
               <SidebarMenuItem>
-                {isCollapsed
-                  ? <DropdownNav items={collapsibleItems} />
-                  : <CollapsibleNav items={collapsibleItems} />
-                }
+                {isCollapsed ? (
+                  <DropdownNav items={collapsibleItems} />
+                ) : (
+                  <CollapsibleNav items={collapsibleItems} />
+                )}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

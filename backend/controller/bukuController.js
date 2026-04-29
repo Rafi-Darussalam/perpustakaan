@@ -1,0 +1,160 @@
+const { Buku } = require("../models");
+
+const tambahBuku = async (req, res) => {
+    try {
+        const { judul, penulis, kategori } = req.body;
+
+        if (!judul || !penulis || !kategori) {
+            return res.status(400).json({
+                status: "error",
+                message: "Judul, penulis dan kategori wajib diisi",
+            });
+        }
+
+        const dataBuku = await Buku.create({
+            judul: judul,
+            penulis: penulis,
+            kategori: kategori,
+        });
+
+        return res.status(201).json({
+            status: "success",
+            message: "Buku berhasil ditambahkan",
+            data: dataBuku,
+        });
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({
+            status: "error",
+            message: err.message,
+        });
+    }
+};
+
+const getBuku = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await Buku.findAndCountAll({
+            limit: limit,
+            offset: offset,
+            order: [["createdAt", "DESC"]],
+        });
+
+        return res.status(200).json({
+            status: "success",
+            data: rows,
+            pagination: {
+                totalItems: count,
+                totalPages: Math.ceil(count / limit),
+                currentPage: page,
+                limit: limit,
+            },
+        });
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({
+            status: "error",
+            message: err.message,
+        });
+    }
+};
+
+const countBuku = async (req, res) => {
+    const totalBuku = await Buku.count()
+
+    return res.status(200).json({
+        count: totalBuku
+    })
+}
+
+const updateBuku = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { judul, penulis, kategori, status } = req.body;
+
+        const buku = await Buku.findByPk(id);
+
+        if (!buku) {
+            return res.status(404).json({
+                status: "error",
+                message: "Buku tidak ditemukan",
+            });
+        }
+
+        await buku.update({ judul, penulis, kategori, status });
+
+        return res.status(200).json({
+            status: "success",
+            message: "Buku berhasil diperbarui",
+            data: buku,
+        });
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({
+            status: "error",
+            message: err.message,
+        });
+    }
+};
+
+const deleteBuku = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const buku = await Buku.findByPk(id);
+
+        if (!buku) {
+            return res.status(404).json({
+                status: "error",
+                message: "Buku tidak ditemukan",
+            });
+        }
+
+        await buku.destroy();
+
+        return res.status(200).json({
+            status: "success",
+            message: "Buku berhasil dihapus",
+        });
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({
+            status: "error",
+            message: err.message,
+        });
+    }
+};
+
+const deleteBukuBulk = async (req, res) => {
+    try {
+        const { ids } = req.body;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({
+                status: "error",
+                message: "ID buku tidak valid atau kosong",
+            });
+        }
+
+        await Buku.destroy({
+            where: {
+                id: ids
+            }
+        });
+
+        return res.status(200).json({
+            status: "success",
+            message: `${ids.length} buku berhasil dihapus`,
+        });
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({
+            status: "error",
+            message: err.message,
+        });
+    }
+};
+
+module.exports = { tambahBuku, getBuku, countBuku, updateBuku, deleteBuku, deleteBukuBulk };

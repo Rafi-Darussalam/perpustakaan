@@ -59,6 +59,24 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  mainWindow.webContents.session.webRequest.onHeadersReceived(
+    (details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [
+            "default-src 'self'",
+            "connect-src 'self' http://127.0.0.1:3000 http://localhost:3000 http://localhost:*",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "style-src 'self' 'unsafe-inline'"
+          ].join('; ')
+        }
+      })
+    }
+  )
+
+  mainWindow.loadURL('http://localhost:5173')
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -93,6 +111,7 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+
 
 
 

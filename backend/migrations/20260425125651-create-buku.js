@@ -15,12 +15,12 @@ module.exports = {
       penulis: {
         type: Sequelize.STRING
       },
+      kategori: {
+        type: Sequelize.STRING
+      },
       status: {
         type: Sequelize.STRING,
         defaultValue: 'tersedia'
-      },
-      rating: {
-        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,

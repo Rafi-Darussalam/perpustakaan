@@ -4,11 +4,11 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { SidebarMenuButton } from "./sidebar"
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { SidebarMenuButton } from './sidebar'
 import { LucideIcon } from 'lucide-react'
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation } from 'react-router-dom'
 
 interface CollapsibleChild {
   to: string
@@ -35,7 +35,7 @@ function DropdownNavItem({ icon: Icon, label, children }: DropdownItem) {
         <SidebarMenuButton
           data-active={hasActiveChild}
           tooltip={label}
-          className="data-[active=true]:text-blue-500"
+          className="data-[active=true]:text-blue-500 transition-colors"
         >
           <Icon />
         </SidebarMenuButton>
@@ -46,9 +46,7 @@ function DropdownNavItem({ icon: Icon, label, children }: DropdownItem) {
         {children.map(({ to, label: childLabel }) => (
           <NavLink key={to} to={to}>
             {({ isActive }) => (
-              <DropdownMenuItem
-                className={isActive ? "text-blue-500 font-medium" : ""}
-              >
+              <DropdownMenuItem className={isActive ? 'text-blue-500 font-medium' : ''}>
                 {childLabel}
               </DropdownMenuItem>
             )}

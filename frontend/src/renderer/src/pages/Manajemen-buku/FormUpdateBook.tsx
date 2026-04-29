@@ -4,7 +4,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -12,18 +11,22 @@ import { Input } from '@/components/ui/input'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { toast } from 'sonner'
 
-import { Plus } from 'lucide-react'
-
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { bukuSchema, type BukuSchema } from '@/schemas/schema'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import axios from 'axios'
 import { BUKU_API_URL } from '@/constants/constant'
 
-export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
-  const [open, setOpen] = useState(false)
+type UpdateBookProps = {
+  open: boolean
+  setOpen: (open: boolean) => void
+  bookData: any
+  onSuccess: () => void
+}
+
+export default function UpdateBook({ open, setOpen, bookData, onSuccess }: UpdateBookProps) {
   const [errorMessage, setErrorMessage] = useState('')
 
   const {
@@ -40,43 +43,40 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
     }
   })
 
+  useEffect(() => {
+    if (bookData) {
+      reset({
+        judul: bookData.judul,
+        penulis: bookData.penulis,
+        kategori: bookData.kategori
+      })
+    }
+  }, [bookData, reset])
+
   async function onSubmit(data: BukuSchema) {
     try {
       setErrorMessage('')
-      console.log('Hitting API:', BUKU_API_URL)
-      console.log('Payload:', data)
-
-      const response = await axios.post(BUKU_API_URL, data, {
+      
+      const response = await axios.put(`${BUKU_API_URL}/${bookData.id}`, data, {
         headers: {
           'Content-Type': 'application/json'
         }
       })
 
-      console.log('Response:', response.data)
-      console.log('Data terkirim:', data)
+      console.log('Update Response:', response.data)
 
-      reset()
-      toast.success('Berhasil menambah buku')
+      toast.success('Berhasil memperbarui buku')
       onSuccess()
       setOpen(false)
     } catch (error) {
-      console.error('Error detail:', error)
+      console.error('Update Error:', error)
 
       if (axios.isAxiosError(error)) {
-        if (error.response) {
-          console.log('Error response:', error.response.data)
-          console.log('Status code:', error.response.status)
-
-          const message =
-            error.response.data?.message ||
-            error.response.data?.error ||
-            `Gagal menambahkan buku (Status: ${error.response.status})`
-          setErrorMessage(message)
-        } else if (error.request) {
-          setErrorMessage('Tidak dapat terhubung ke server. Periksa koneksi Anda.')
-        } else {
-          setErrorMessage(error.message || 'Terjadi kesalahan saat mengirim data')
-        }
+        const message =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          'Terjadi kesalahan saat memperbarui data'
+        setErrorMessage(message)
       } else {
         setErrorMessage('Terjadi kesalahan yang tidak diketahui')
       }
@@ -85,22 +85,21 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus />
-          Tambah Buku
-        </Button>
-      </DialogTrigger>
-
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-[1.3rem]">Tambah Buku</DialogTitle>
+          <DialogTitle className="text-[1.3rem]">Edit Buku</DialogTitle>
           <DialogDescription>
-            Isi data buku di bawah ini untuk menambahkan koleksi baru ke perpustakaan.
+            Ubah data buku di bawah ini untuk memperbarui koleksi perpustakaan.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 pt-2">
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-md text-sm">
+              {errorMessage}
+            </div>
+          )}
+
           <Field aria-invalid={!!errors.judul}>
             <FieldLabel htmlFor="judul">Judul Buku</FieldLabel>
             <Input
@@ -139,7 +138,7 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
               Batal
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+              {isSubmitting ? 'Menyimpan...' : 'Perbarui'}
             </Button>
           </DialogFooter>
         </form>

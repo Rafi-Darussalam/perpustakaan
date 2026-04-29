@@ -1,7 +1,8 @@
 import { DataTable } from '@renderer/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,87 +12,280 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import { useState, useEffect, useMemo } from 'react'
+import axios from 'axios'
+import { BUKU_API_URL } from '@/constants/constant'
+import { toast } from 'sonner'
+import UpdateBook from './FormUpdateBook'
 
-type User = {
-  id: string
+type Buku = {
+  id: number
   judul: string
   penulis: string
-  role: 'admin' | 'user' | 'moderator'
+  kategori: string
   status: 'tersedia' | 'rusak' | 'dipinjam'
-  rating: string
+  createdAt: string
 }
 
-const users: User[] = [
-  {
-    id: '1',
-    judul: 'Laskar Pelangi',
-    penulis: 'jokowi',
-    role: 'admin',
-    status: 'tersedia',
-    rating: '5/5'
-  }
-]
+export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number }) {
+  const [data, setData] = useState<Buku[]>([])
+  const [loading, setLoading] = useState(true)
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10
+  })
+  const [pageCount, setPageCount] = useState(0)
 
-const columns: ColumnDef<User>[] = [
-  {
-    accessorKey: 'judul',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Judul
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
+  const [editOpen, setEditOpen] = useState(false)
+  const [selectedBook, setSelectedBook] = useState<Buku | null>(null)
+
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [tableInstance, setTableInstance] = useState<any>(null)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const response = await axios.get(BUKU_API_URL, {
+        params: {
+          page: pagination.pageIndex + 1,
+          limit: pagination.pageSize
+        }
+      })
+      setData(response.data.data)
+      setPageCount(response.data.pagination.totalPages)
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    } finally {
+      setLoading(false)
     }
-  },
-  {
-    accessorKey: 'penulis',
-    header: 'Penulis'
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => {
-      const status = row.getValue('status') as string
-      const variants: Record<string, string> = {
-        tersedia: 'bg-green-500',
-        rusak: 'bg-red-500',
-        dipinjam: 'bg-yellow-500'
+  }
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+
+    try {
+      await axios.delete(`${BUKU_API_URL}/${deleteId}`)
+      toast.success('Buku berhasil dihapus')
+      fetchData()
+      setDeleteOpen(false)
+    } catch (error) {
+      console.error('Delete error:', error)
+      toast.error('Gagal menghapus buku')
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (!tableInstance) return
+    
+    const selectedRows = tableInstance.getFilteredSelectedRowModel().rows
+    const ids = selectedRows.map((row: any) => row.original.id)
+
+    if (ids.length === 0) return
+
+    try {
+      await axios.post(`${BUKU_API_URL}/delete-bulk`, { ids })
+      toast.success(`${ids.length} buku berhasil dihapus`)
+      tableInstance.resetRowSelection()
+      fetchData()
+      setBulkDeleteOpen(false)
+    } catch (error) {
+      console.error('Bulk delete error:', error)
+      toast.error('Gagal menghapus buku terpilih')
+    }
+  }
+
+  const confirmBulkDelete = (table: any) => {
+    setTableInstance(table)
+    setBulkDeleteOpen(true)
+  }
+
+  const confirmDelete = (id: number) => {
+    setDeleteId(id)
+    setDeleteOpen(true)
+  }
+
+  const handleEdit = (book: Buku) => {
+    setSelectedBook(book)
+    setEditOpen(true)
+  }
+
+  const columns: ColumnDef<Buku>[] = useMemo(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 40
+    },
+    {
+      accessorKey: 'judul',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Judul
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
       }
-      return <Badge className={variants[status]}>{status}</Badge>
+    },
+    {
+      accessorKey: 'penulis',
+      header: 'Penulis'
+    },
+    {
+      accessorKey: 'kategori',
+      header: 'Kategori'
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => {
+        const status = (row.getValue('status') as string) || 'tersedia'
+        const variants: Record<string, string> = {
+          tersedia: 'bg-green-500 hover:bg-green-600',
+          rusak: 'bg-red-500 hover:bg-red-600',
+          dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-black'
+        }
+        return <Badge className={variants[status]}>{status}</Badge>
+      }
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        const book = row.original
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleEdit(book)}>Edit buku</DropdownMenuItem>
+              <DropdownMenuItem variant='destructive' onClick={() => confirmDelete(book.id)}>
+                Hapus buku
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      }
     }
-  },
-  {
-    accessorKey: 'rating',
-    header: 'Rating'
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Edit buku</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">Hapus buku</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    }
-  }
-]
+  ], [])
 
-export default function ManajemenBukuTable() {
+  useEffect(() => {
+    fetchData()
+  }, [pagination, refreshKey])
+
+  if (loading && data.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
-    <DataTable columns={columns} data={users} searchKey="judul" searchPlaceholder="Cari judul..." />
+    <>
+      <DataTable
+        columns={columns}
+        data={data}
+        searchKey="judul"
+        searchPlaceholder="Cari judul..."
+        pageCount={pageCount}
+        pageIndex={pagination.pageIndex}
+        pageSize={pagination.pageSize}
+        onPaginationChange={setPagination}
+        renderBulkActions={(table) => (
+          <Button
+            variant="destructive"
+            onClick={() => confirmBulkDelete(table)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Hapus ({table.getFilteredSelectedRowModel().rows.length})
+          </Button>
+        )}
+      />
+      
+      <UpdateBook 
+        open={editOpen} 
+        setOpen={setEditOpen} 
+        bookData={selectedBook} 
+        onSuccess={fetchData}
+      />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus buku secara permanen dari database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan menghapus {tableInstance?.getFilteredSelectedRowModel().rows.length} buku yang terpilih secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleBulkDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Hapus Semua
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

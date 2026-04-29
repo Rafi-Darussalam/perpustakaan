@@ -11,10 +11,8 @@ export const bukuSchema = z.object({
         message: "Nama penulis minimal 2 karakter"
     }),
 
-    rating: z.number().min(1, {
-        message: "Rating minimal 1"
-    }).max(5, {
-        message: "Rating maksimal 5"
+    kategori: z.string().min(2, {
+        message: "Kategori minimal 2 karakter"
     })
 })
 
