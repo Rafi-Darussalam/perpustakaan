@@ -105,7 +105,7 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
             <FieldLabel htmlFor="judul">Judul Buku</FieldLabel>
             <Input
               id="judul"
-              placeholder="Contoh: Laskar Pelangi"
+              placeholder="Contoh: The Shining"
               aria-invalid={!!errors.judul}
               {...register('judul')}
             />
@@ -116,7 +116,7 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
             <FieldLabel htmlFor="penulis">Penulis</FieldLabel>
             <Input
               id="penulis"
-              placeholder="Contoh: Andrea Hirata"
+              placeholder="Contoh: Stephen King"
               aria-invalid={!!errors.penulis}
               {...register('penulis')}
             />
@@ -127,7 +127,7 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
             <FieldLabel htmlFor="kategori">Kategori</FieldLabel>
             <Input
               id="kategori"
-              placeholder="Contoh: Romance"
+              placeholder="Contoh: Horor"
               aria-invalid={!!errors.kategori}
               {...register('kategori')}
             />

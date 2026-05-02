@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,21 +23,21 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
-import { BUKU_API_URL } from '@/constants/constant'
+import { ANGGOTA_API_URL } from '@/constants/constant'
 import { toast } from 'sonner'
-import UpdateBook from './FormUpdateBook'
+import FormUpdateAnggota from './FormUpdateAnggota'
 
-type Buku = {
+type Anggota = {
   id: number
-  judul: string
-  penulis: string
-  kategori: string
-  status: 'tersedia' | 'rusak' | 'dipinjam'
+  nama: string
+  nomor_telepon: string
+  email: string
+  alamat: string
   createdAt: string
 }
 
-export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number }) {
-  const [data, setData] = useState<Buku[]>([])
+export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: number }) {
+  const [data, setData] = useState<Anggota[]>([])
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -47,7 +46,7 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
   const [pageCount, setPageCount] = useState(0)
 
   const [editOpen, setEditOpen] = useState(false)
-  const [selectedBook, setSelectedBook] = useState<Buku | null>(null)
+  const [selectedAnggota, setSelectedAnggota] = useState<Anggota | null>(null)
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -58,7 +57,7 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
   const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(BUKU_API_URL, {
+      const response = await axios.get(ANGGOTA_API_URL, {
         params: {
           page: pagination.pageIndex + 1,
           limit: pagination.pageSize
@@ -68,6 +67,7 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
       setPageCount(response.data.pagination.totalPages)
     } catch (error) {
       console.error('Error fetching data:', error)
+      toast.error('Gagal mengambil data anggota')
     } finally {
       setLoading(false)
     }
@@ -77,13 +77,13 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
     if (!deleteId) return
 
     try {
-      await axios.delete(`${BUKU_API_URL}/${deleteId}`)
-      toast.success('Buku berhasil dihapus')
+      await axios.delete(`${ANGGOTA_API_URL}/${deleteId}`)
+      toast.success('Anggota berhasil dihapus')
       fetchData()
       setDeleteOpen(false)
     } catch (error) {
       console.error('Delete error:', error)
-      toast.error('Gagal menghapus buku')
+      toast.error('Gagal menghapus anggota')
     }
   }
 
@@ -96,14 +96,14 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
     if (ids.length === 0) return
 
     try {
-      await axios.post(`${BUKU_API_URL}/delete-bulk`, { ids })
-      toast.success(`${ids.length} buku berhasil dihapus`)
+      await axios.post(`${ANGGOTA_API_URL}/delete-bulk`, { ids })
+      toast.success(`${ids.length} anggota berhasil dihapus`)
       tableInstance.resetRowSelection()
       fetchData()
       setBulkDeleteOpen(false)
     } catch (error) {
       console.error('Bulk delete error:', error)
-      toast.error('Gagal menghapus buku terpilih')
+      toast.error('Gagal menghapus anggota terpilih')
     }
   }
 
@@ -117,12 +117,12 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
     setDeleteOpen(true)
   }
 
-  const handleEdit = (book: Buku) => {
-    setSelectedBook(book)
+  const handleEdit = (anggota: Anggota) => {
+    setSelectedAnggota(anggota)
     setEditOpen(true)
   }
 
-  const columns: ColumnDef<Buku>[] = useMemo(() => [
+  const columns: ColumnDef<Anggota>[] = useMemo(() => [
     {
       id: 'select',
       header: ({ table }) => (
@@ -147,44 +147,39 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
       size: 40
     },
     {
-      accessorKey: 'judul',
+      accessorKey: 'nama',
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
-            Judul
+            Nama
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
       }
     },
     {
-      accessorKey: 'penulis',
-      header: 'Penulis'
+      accessorKey: 'nomor_telepon',
+      header: 'Nomor Telepon'
     },
     {
-      accessorKey: 'kategori',
-      header: 'Kategori'
+      accessorKey: 'email',
+      header: 'Email'
     },
     {
-      accessorKey: 'status',
-      header: 'Status',
+      accessorKey: 'alamat',
+      header: 'Alamat',
       cell: ({ row }) => {
-        const status = (row.getValue('status') as string) || 'tersedia'
-        const variants: Record<string, string> = {
-          tersedia: 'bg-green-500 hover:bg-green-600',
-          rusak: 'bg-red-500 hover:bg-red-600',
-          dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-black'
-        }
-        return <Badge className={variants[status]}>{status}</Badge>
+        const alamat = row.getValue('alamat') as string
+        return <div className="max-w-[200px] truncate">{alamat || '-'}</div>
       }
     },
     {
       id: 'actions',
       cell: ({ row }) => {
-        const book = row.original
+        const anggota = row.original
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -195,9 +190,9 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Aksi</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleEdit(book)}>Edit buku</DropdownMenuItem>
-              <DropdownMenuItem variant='destructive' onClick={() => confirmDelete(book.id)}>
-                Hapus buku
+              <DropdownMenuItem onClick={() => handleEdit(anggota)}>Edit anggota</DropdownMenuItem>
+              <DropdownMenuItem variant='destructive' onClick={() => confirmDelete(anggota.id)}>
+                Hapus anggota
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -223,14 +218,8 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
       <DataTable
         columns={columns}
         data={data}
-        searchKey="judul"
-        searchPlaceholder="Cari judul..."
-        filterKey="status"
-        filterOptions={[
-          { label: 'Tersedia', value: 'tersedia' },
-          { label: 'Rusak', value: 'rusak' },
-          { label: 'Dipinjam', value: 'dipinjam' }
-        ]}
+        searchKey="nama"
+        searchPlaceholder="Cari nama anggota..."
         pageCount={pageCount}
         pageIndex={pagination.pageIndex}
         pageSize={pagination.pageSize}
@@ -246,10 +235,10 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
         )}
       />
       
-      <UpdateBook 
+      <FormUpdateAnggota 
         open={editOpen} 
         setOpen={setEditOpen} 
-        bookData={selectedBook} 
+        anggotaData={selectedAnggota} 
         onSuccess={fetchData}
       />
 
@@ -258,7 +247,7 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus buku secara permanen dari database.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus data anggota secara permanen dari database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -278,7 +267,7 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini akan menghapus {tableInstance?.getFilteredSelectedRowModel().rows.length} buku yang terpilih secara permanen.
+              Tindakan ini akan menghapus {tableInstance?.getFilteredSelectedRowModel().rows.length} anggota yang terpilih secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

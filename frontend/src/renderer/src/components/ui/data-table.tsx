@@ -28,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ListFilter } from 'lucide-react'
 import { useState } from 'react'
 
 interface DataTableProps<TData, TValue> {
@@ -41,6 +41,8 @@ interface DataTableProps<TData, TValue> {
   pageSize?: number
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   renderBulkActions?: (table: any) => React.ReactNode
+  filterKey?: string
+  filterOptions?: { label: string; value: string }[]
 }
 
 export function DataTable<TData, TValue>({
@@ -52,7 +54,9 @@ export function DataTable<TData, TValue>({
   pageIndex,
   pageSize,
   onPaginationChange,
-  renderBulkActions
+  renderBulkActions,
+  filterKey,
+  filterOptions
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -118,6 +122,30 @@ export function DataTable<TData, TValue>({
           {Object.keys(rowSelection).length > 0 && renderBulkActions && (
             <div className="flex items-center gap-2">{renderBulkActions(table)}</div>
           )}
+          
+          {filterKey && filterOptions && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <ListFilter className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[150px]">
+                {filterOptions.map((option) => (
+                  <DropdownMenuCheckboxItem
+                    key={option.value}
+                    className="capitalize"
+                    checked={table.getColumn(filterKey)?.getFilterValue() === option.value}
+                    onCheckedChange={(value) =>
+                      table.getColumn(filterKey)?.setFilterValue(value ? option.value : undefined)
+                    }
+                  >
+                    {option.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           {/* Column visibility dropdown */}
           <DropdownMenu>
@@ -179,7 +207,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {data.length === 0 ? 'Empty' : 'No results.'}
+                  {data.length === 0 ? 'Kosong' : 'Tidak ada hasil.'}
                 </TableCell>
               </TableRow>
             )}

@@ -38,6 +38,7 @@ function DropdownNavItem({ icon: Icon, label, children }: DropdownItem) {
           className="data-[active=true]:text-blue-500 transition-colors"
         >
           <Icon />
+          {label}
         </SidebarMenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right" align="start">
@@ -46,7 +47,7 @@ function DropdownNavItem({ icon: Icon, label, children }: DropdownItem) {
         {children.map(({ to, label: childLabel }) => (
           <NavLink key={to} to={to}>
             {({ isActive }) => (
-              <DropdownMenuItem className={isActive ? 'text-blue-500 font-medium' : ''}>
+              <DropdownMenuItem className={isActive ? 'text-blue-500 focus:text-blue-500 font-medium' : ''}>
                 {childLabel}
               </DropdownMenuItem>
             )}
