@@ -43,6 +43,7 @@ interface DataTableProps<TData, TValue> {
   renderBulkActions?: (table: any) => React.ReactNode
   filterKey?: string
   filterOptions?: { label: string; value: string }[]
+  initialSorting?: SortingState
 }
 
 export function DataTable<TData, TValue>({
@@ -56,9 +57,10 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   renderBulkActions,
   filterKey,
-  filterOptions
+  filterOptions,
+  initialSorting = []
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>(initialSorting)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})

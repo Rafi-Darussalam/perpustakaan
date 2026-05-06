@@ -16,17 +16,21 @@ import { Avatar, AvatarImage, AvatarFallback } from './avatar'
 
 import { NavLink } from 'react-router-dom'
 
-import { Home, Book, FileText } from 'lucide-react'
+import { Home, Book, FileText, Bell } from 'lucide-react'
 
 import { CollapsibleNav } from './sidebar-collapsible'
 import { DropdownNav } from './sidebar-dropdown'
 
 const iconComponents = {
   Home: Home,
-  Book: Book
+  Book: Book,
+  Bell: Bell
 }
 
-const pages = [{ page: '/', text: 'Home', icon: 'Home' }]
+const pages = [
+  { page: '/', text: 'Home', icon: 'Home' },
+  { page: '/notifikasi', text: 'Notifikasi', icon: 'Bell' }
+]
 
 const collapsibleItems = [
   {

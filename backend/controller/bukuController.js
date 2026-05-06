@@ -15,6 +15,7 @@ const tambahBuku = async (req, res) => {
             judul: judul,
             penulis: penulis,
             kategori: kategori,
+            status: "Tersedia",
         });
 
         return res.status(201).json({
@@ -33,11 +34,20 @@ const tambahBuku = async (req, res) => {
 
 const getBuku = async (req, res) => {
     try {
+        const search = req.query.search || "";
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
 
+        const { Op } = require("sequelize");
+
         const { count, rows } = await Buku.findAndCountAll({
+            where: {
+                [Op.or]: [
+                    { judul: { [Op.like]: `%${search}%` } },
+                    { penulis: { [Op.like]: `%${search}%` } },
+                ],
+            },
             limit: limit,
             offset: offset,
             order: [["createdAt", "DESC"]],

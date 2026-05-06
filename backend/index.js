@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bukuRouter = require("./routes/buku.js");
 const anggotaRouter = require("./routes/anggota.js");
+const peminjamanRouter = require("./routes/peminjaman.js");
 
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use("/buku", bukuRouter);
 app.use("/anggota", anggotaRouter);
+app.use("/peminjaman", peminjamanRouter);
 
 
 app.get("/", (req, res) => {

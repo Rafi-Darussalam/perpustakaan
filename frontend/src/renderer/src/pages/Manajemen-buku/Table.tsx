@@ -172,13 +172,14 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const status = (row.getValue('status') as string) || 'tersedia'
+        const status = (row.getValue('status') as string) || 'Tersedia'
         const variants: Record<string, string> = {
-          tersedia: 'bg-green-500 hover:bg-green-600',
-          rusak: 'bg-red-500 hover:bg-red-600',
-          dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-black'
+          tersedia: 'bg-green-500 hover:bg-green-600 text-white',
+          rusak: 'bg-red-500 hover:bg-red-600 text-white',
+          dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-white'
         }
-        return <Badge className={variants[status]}>{status}</Badge>
+        const variantClass = variants[status.toLowerCase()] || 'bg-blue-500 text-white'
+        return <Badge className={variantClass}>{status}</Badge>
       }
     },
     {
