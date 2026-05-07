@@ -42,11 +42,22 @@ const tambahPeminjaman = async (req, res) => {
 
 const getPeminjaman = async (req, res) => {
     try {
+        const search = req.query.search || "";
+        const status = req.query.status || "";
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
 
+        const whereClause = {
+            '$anggota.nama$': { [Op.like]: `%${search}%` }
+        };
+
+        if (status) {
+            whereClause.status = status;
+        }
+
         const { count, rows } = await Peminjaman.findAndCountAll({
+            where: whereClause,
             include: [
                 { model: Anggota, as: "anggota" },
                 { model: Buku, as: "buku" }
@@ -162,6 +173,21 @@ const hapusMasalPeminjaman = async (req, res) => {
             });
         }
 
+        // Cek apakah ada peminjaman yang masih aktif (Dipinjam)
+        const activeLoans = await Peminjaman.count({
+            where: {
+                id: { [Op.in]: ids },
+                status: 'Dipinjam'
+            }
+        });
+
+        if (activeLoans > 0) {
+            return res.status(400).json({
+                status: "error",
+                message: "Tidak dapat menghapus data peminjaman yang masih aktif",
+            });
+        }
+
         await Peminjaman.destroy({
             where: {
                 id: {
@@ -183,10 +209,39 @@ const hapusMasalPeminjaman = async (req, res) => {
     }
 }
 
+const countPeminjamanStats = async (req, res) => {
+    try {
+        const totalDipinjam = await Peminjaman.count({
+            where: { status: "Dipinjam" }
+        });
+
+        const today = new Date();
+        const totalTerlambat = await Peminjaman.count({
+            where: {
+                status: "Dipinjam",
+                tanggal_jatuh_tempo: {
+                    [Op.lt]: today
+                }
+            }
+        });
+
+        return res.status(200).json({
+            totalDipinjam,
+            totalTerlambat
+        });
+    } catch (err) {
+        return res.status(500).json({
+            status: "error",
+            message: err.message,
+        });
+    }
+}
+
 module.exports = {
     tambahPeminjaman,
     getPeminjaman,
     getOverduePeminjaman,
     kembalikanBuku,
-    hapusMasalPeminjaman
+    hapusMasalPeminjaman,
+    countPeminjamanStats
 };

@@ -20,16 +20,16 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
+  SelectValue
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { PEMINJAMAN_API_URL } from '@/constants/constant'
@@ -62,6 +62,8 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
     pageSize: 10
   })
   const [pageCount, setPageCount] = useState(0)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<string | undefined>(undefined)
   const [returnId, setReturnId] = useState<number | null>(null)
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
   const [returnCondition, setReturnCondition] = useState<'utuh' | 'rusak'>('utuh')
@@ -74,7 +76,9 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
       const response = await axios.get(PEMINJAMAN_API_URL, {
         params: {
           page: pagination.pageIndex + 1,
-          limit: pagination.pageSize
+          limit: pagination.pageSize,
+          search: search,
+          status: status
         }
       })
       setData(response.data.data)
@@ -106,144 +110,154 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
       setIsDeleteDialogOpen(false)
       setIdsToDelete([])
       fetchData()
-    } catch (error) {
-      toast.error('Gagal menghapus data')
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal menghapus data')
     }
   }
 
-  const columns: ColumnDef<Peminjaman>[] = useMemo(() => [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-          disabled={row.original.status.toLowerCase() === 'dipinjam'}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false
-    },
-    {
-      id: 'peminjam',
-      accessorKey: 'anggota.nama',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Peminjam
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    {
-      id: 'buku',
-      accessorKey: 'buku.judul',
-      header: 'Buku'
-    },
-    {
-      accessorKey: 'tanggal_pinjam',
-      header: 'Tgl Pinjam',
-      cell: ({ row }) => format(new Date(row.getValue('tanggal_pinjam')), 'dd MMMM yyyy', { locale: id })
-    },
-    {
-      accessorKey: 'tanggal_jatuh_tempo',
-      header: 'Jatuh Tempo',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('tanggal_jatuh_tempo'))
-        const isOverdue = new Date() > date && row.original.status === 'Dipinjam'
-        return (
-          <span className={isOverdue ? 'text-destructive font-bold' : ''}>
-            {format(date, 'dd MMMM yyyy', { locale: id })}
-          </span>
+  const columns: ColumnDef<Peminjaman>[] = useMemo(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+            disabled={row.original.status.toLowerCase() === 'dipinjam'}
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false
+      },
+      {
+        id: 'peminjam',
+        accessorKey: 'anggota.nama',
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Peminjam
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
         )
-      }
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const status = (row.getValue('status') as string) || ""
-        const variants: Record<string, string> = {
-          dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-white',
-          dikembalikan: 'bg-green-500 hover:bg-green-600 text-white',
-          rusak: 'bg-red-500 hover:bg-red-600 text-white'
+      },
+      {
+        id: 'buku',
+        accessorKey: 'buku.judul',
+        header: 'Buku'
+      },
+      {
+        accessorKey: 'tanggal_pinjam',
+        header: 'Tgl Pinjam',
+        cell: ({ row }) =>
+          format(new Date(row.getValue('tanggal_pinjam')), 'dd MMMM yyyy', { locale: id })
+      },
+      {
+        accessorKey: 'tanggal_jatuh_tempo',
+        header: 'Jatuh Tempo',
+        cell: ({ row }) => {
+          const date = new Date(row.getValue('tanggal_jatuh_tempo'))
+          const isOverdue = new Date() > date && row.original.status === 'Dipinjam'
+          return (
+            <span className={isOverdue ? 'text-destructive font-bold' : ''}>
+              {format(date, 'dd MMMM yyyy', { locale: id })}
+            </span>
+          )
         }
-        const variantClass = variants[status.toLowerCase()] || 'bg-blue-500 text-white'
-        return <Badge className={variantClass}>{status}</Badge>
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+          const status = (row.getValue('status') as string) || ''
+          const variants: Record<string, string> = {
+            dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-white',
+            dikembalikan: 'bg-green-500 hover:bg-green-600 text-white',
+            rusak: 'bg-red-500 hover:bg-red-600 text-white'
+          }
+          const variantClass = variants[status.toLowerCase()] || 'bg-blue-500 text-white'
+          return <Badge className={variantClass}>{status}</Badge>
+        }
+      },
+      {
+        id: 'actions',
+        cell: ({ row }) => {
+          const pinjam = row.original
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {pinjam.status === 'Dipinjam' && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setReturnId(pinjam.id)
+                      setIsReturnDialogOpen(true)
+                    }}
+                  >
+                    Kembalikan Buku
+                  </DropdownMenuItem>
+                )}
+                {(pinjam.status.toLowerCase() === 'dikembalikan' ||
+                  pinjam.status.toLowerCase() === 'rusak') && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIdsToDelete([pinjam.id])
+                      setIsDeleteDialogOpen(true)
+                    }}
+                    variant="destructive"
+                  >
+                    Hapus Data
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
       }
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const pinjam = row.original
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {pinjam.status === 'Dipinjam' && (
-                <DropdownMenuItem onClick={() => {
-                  setReturnId(pinjam.id)
-                  setIsReturnDialogOpen(true)
-                }}>
-                  Kembalikan Buku
-                </DropdownMenuItem>
-              )}
-              {(pinjam.status.toLowerCase() === 'dikembalikan' || pinjam.status.toLowerCase() === 'rusak') && (
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setIdsToDelete([pinjam.id])
-                    setIsDeleteDialogOpen(true)
-                  }}
-                  variant='destructive'
-                >
-                  Hapus Data
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      }
-    }
-  ], [])
+    ],
+    []
+  )
 
   useEffect(() => {
     fetchData()
-  }, [pagination, refreshKey])
-
-  if (loading && data.length === 0) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  }, [pagination, search, status, refreshKey])
 
   return (
     <>
       <DataTable
         columns={columns}
         data={data}
+        isLoading={loading}
         searchKey="peminjam"
         searchPlaceholder="Cari peminjam..."
+        onSearchChange={(value) => {
+          if (value !== search) {
+            setSearch(value)
+            setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+          }
+        }}
+        onFilterChange={(value) => {
+          setStatus(value)
+          setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+        }}
         pageCount={pageCount}
         pageIndex={pagination.pageIndex}
         pageSize={pagination.pageSize}
@@ -275,15 +289,13 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus data peminjaman yang dipilih secara permanen dari database.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus data peminjaman yang dipilih
+              secara permanen dari database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleHapus} 
-              variant="destructive"
-            >
+            <AlertDialogAction onClick={handleHapus} variant="destructive">
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -301,8 +313,8 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="kondisi">Kondisi buku</Label>
-              <Select 
-                value={returnCondition} 
+              <Select
+                value={returnCondition}
                 onValueChange={(value: any) => setReturnCondition(value)}
               >
                 <SelectTrigger id="kondisi" className="w-full">
@@ -317,9 +329,8 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => returnId && handleKembalikan(returnId, returnCondition)}
-              className="bg-green-600 hover:bg-green-700 text-white"
             >
               Konfirmasi
             </AlertDialogAction>

@@ -1,4 +1,4 @@
-const { Buku } = require("../models");
+const { Buku, Peminjaman } = require("../models");
 
 const tambahBuku = async (req, res) => {
     try {
@@ -35,19 +35,23 @@ const tambahBuku = async (req, res) => {
 const getBuku = async (req, res) => {
     try {
         const search = req.query.search || "";
+        const status = req.query.status || "";
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
 
         const { Op } = require("sequelize");
 
+        const whereClause = {
+            judul: { [Op.like]: `%${search}%` },
+        };
+
+        if (status) {
+            whereClause.status = status;
+        }
+
         const { count, rows } = await Buku.findAndCountAll({
-            where: {
-                [Op.or]: [
-                    { judul: { [Op.like]: `%${search}%` } },
-                    { penulis: { [Op.like]: `%${search}%` } },
-                ],
-            },
+            where: whereClause,
             limit: limit,
             offset: offset,
             order: [["createdAt", "DESC"]],
@@ -122,6 +126,11 @@ const deleteBuku = async (req, res) => {
             });
         }
 
+        // Hapus semua peminjaman terkait buku ini (Cascade)
+        await Peminjaman.destroy({
+            where: { bukuId: id }
+        });
+
         await buku.destroy();
 
         return res.status(200).json({
@@ -147,6 +156,11 @@ const deleteBukuBulk = async (req, res) => {
                 message: "ID buku tidak valid atau kosong",
             });
         }
+
+        // Hapus semua peminjaman terkait buku-buku ini (Cascade)
+        await Peminjaman.destroy({
+            where: { bukuId: ids }
+        });
 
         await Buku.destroy({
             where: {

@@ -40,7 +40,6 @@ const collapsibleItems = [
       { to: '/manajemen-buku', label: 'Buku Perpustakaan' },
       { to: '/manajemen-anggota', label: 'Anggota Perpustakaan' },
       { to: '/manajemen-pinjaman', label: 'Pinjaman Buku' },
-      { to: '/manajemen-pengembalian', label: 'Pengembalian Buku' }
     ]
   }
 ]

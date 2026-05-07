@@ -7,18 +7,33 @@ import {
 } from '@renderer/components/ui/card'
 import axios from 'axios'
 
-import { BUKU_API_URL } from '@/constants/constant'
+import { BUKU_API_URL, ANGGOTA_API_URL, PEMINJAMAN_API_URL } from '@/constants/constant'
 import { useState, useEffect } from 'react'
 
 export default function HomeCardSection() {
-  const [totalBuku, setTotalBuku] = useState(0)
+  const [stats, setStats] = useState({
+    totalBuku: 0,
+    totalAnggota: 0,
+    totalDipinjam: 0,
+    totalTerlambat: 0
+  })
   const [loading, setLoading] = useState(true)
 
   const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${BUKU_API_URL}/count`)
-      setTotalBuku(response.data.count)
+      const [bukuRes, anggotaRes, pinjamRes] = await Promise.all([
+        axios.get(`${BUKU_API_URL}/count`),
+        axios.get(`${ANGGOTA_API_URL}/count`),
+        axios.get(`${PEMINJAMAN_API_URL}/stats`)
+      ])
+      
+      setStats({
+        totalBuku: bukuRes.data.count,
+        totalAnggota: anggotaRes.data.count,
+        totalDipinjam: pinjamRes.data.totalDipinjam,
+        totalTerlambat: pinjamRes.data.totalTerlambat
+      })
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -31,10 +46,10 @@ export default function HomeCardSection() {
   }, [])
 
   const cardInfo = [
-    { title: 'Buku', description: 'Total seluruh buku', value: totalBuku },
-    { title: 'Anggota', description: 'Total seluruh anggota', value: 0 },
-    { title: 'Buku Sedang Dipinjam', description: 'Total buku yang dipinjam', value: 0 },
-    { title: 'Buku Terlambat', description: 'Total seluruh buku', value: 0 }
+    { title: 'Buku', description: 'Total seluruh buku', value: stats.totalBuku },
+    { title: 'Anggota', description: 'Total seluruh anggota', value: stats.totalAnggota },
+    { title: 'Buku Dipinjam', description: 'Total buku dipinjam', value: stats.totalDipinjam },
+    { title: 'Buku Terlambat', description: 'Total buku terlambat', value: stats.totalTerlambat }
   ]
 
   return (

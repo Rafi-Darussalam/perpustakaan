@@ -44,6 +44,7 @@ export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: numb
     pageSize: 10
   })
   const [pageCount, setPageCount] = useState(0)
+  const [search, setSearch] = useState('')
 
   const [editOpen, setEditOpen] = useState(false)
   const [selectedAnggota, setSelectedAnggota] = useState<Anggota | null>(null)
@@ -60,7 +61,8 @@ export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: numb
       const response = await axios.get(ANGGOTA_API_URL, {
         params: {
           page: pagination.pageIndex + 1,
-          limit: pagination.pageSize
+          limit: pagination.pageSize,
+          search: search
         }
       })
       setData(response.data.data)
@@ -81,15 +83,15 @@ export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: numb
       toast.success('Anggota berhasil dihapus')
       fetchData()
       setDeleteOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Delete error:', error)
-      toast.error('Gagal menghapus anggota')
+      toast.error(error.response?.data?.message || 'Gagal menghapus anggota')
     }
   }
 
   const handleBulkDelete = async () => {
     if (!tableInstance) return
-    
+
     const selectedRows = tableInstance.getFilteredSelectedRowModel().rows
     const ids = selectedRows.map((row: any) => row.original.id)
 
@@ -101,9 +103,9 @@ export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: numb
       tableInstance.resetRowSelection()
       fetchData()
       setBulkDeleteOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Bulk delete error:', error)
-      toast.error('Gagal menghapus anggota terpilih')
+      toast.error(error.response?.data?.message || 'Gagal menghapus anggota terpilih')
     }
   }
 
@@ -122,123 +124,124 @@ export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: numb
     setEditOpen(true)
   }
 
-  const columns: ColumnDef<Anggota>[] = useMemo(() => [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      size: 40
-    },
-    {
-      accessorKey: 'nama',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Nama
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        )
+  const columns: ColumnDef<Anggota>[] = useMemo(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 40
+      },
+      {
+        accessorKey: 'nama',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            >
+              Nama
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          )
+        }
+      },
+      {
+        accessorKey: 'nomor_telepon',
+        header: 'Nomor Telepon'
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email'
+      },
+      {
+        accessorKey: 'alamat',
+        header: 'Alamat',
+        cell: ({ row }) => {
+          const alamat = row.getValue('alamat') as string
+          return <div className="max-w-[200px] truncate">{alamat || '-'}</div>
+        }
+      },
+      {
+        id: 'actions',
+        cell: ({ row }) => {
+          const anggota = row.original
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleEdit(anggota)}>
+                  Edit anggota
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={() => confirmDelete(anggota.id)}>
+                  Hapus anggota
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
       }
-    },
-    {
-      accessorKey: 'nomor_telepon',
-      header: 'Nomor Telepon'
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email'
-    },
-    {
-      accessorKey: 'alamat',
-      header: 'Alamat',
-      cell: ({ row }) => {
-        const alamat = row.getValue('alamat') as string
-        return <div className="max-w-[200px] truncate">{alamat || '-'}</div>
-      }
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const anggota = row.original
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleEdit(anggota)}>Edit anggota</DropdownMenuItem>
-              <DropdownMenuItem variant='destructive' onClick={() => confirmDelete(anggota.id)}>
-                Hapus anggota
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      }
-    }
-  ], [])
+    ],
+    []
+  )
 
   useEffect(() => {
     fetchData()
-  }, [pagination, refreshKey])
-
-  if (loading && data.length === 0) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  }, [pagination, search, refreshKey])
 
   return (
     <>
       <DataTable
         columns={columns}
         data={data}
+        isLoading={loading}
         searchKey="nama"
         searchPlaceholder="Cari nama anggota..."
+        onSearchChange={(value) => {
+          if (value !== search) {
+            setSearch(value)
+            setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+          }
+        }}
         pageCount={pageCount}
         pageIndex={pagination.pageIndex}
         pageSize={pagination.pageSize}
         onPaginationChange={setPagination}
         renderBulkActions={(table) => (
-          <Button
-            variant="destructive"
-            onClick={() => confirmBulkDelete(table)}
-          >
+          <Button variant="destructive" onClick={() => confirmBulkDelete(table)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Hapus ({table.getFilteredSelectedRowModel().rows.length})
           </Button>
         )}
       />
-      
-      <FormUpdateAnggota 
-        open={editOpen} 
-        setOpen={setEditOpen} 
-        anggotaData={selectedAnggota} 
+
+      <FormUpdateAnggota
+        open={editOpen}
+        setOpen={setEditOpen}
+        anggotaData={selectedAnggota}
         onSuccess={fetchData}
       />
 
@@ -247,15 +250,13 @@ export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: numb
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus data anggota secara permanen dari database.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus data anggota secara permanen
+              dari database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              variant='destructive'
-            >
+            <AlertDialogAction onClick={handleDelete} variant="destructive">
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -267,15 +268,13 @@ export default function ManajemenAnggotaTable({ refreshKey }: { refreshKey: numb
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini akan menghapus {tableInstance?.getFilteredSelectedRowModel().rows.length} anggota yang terpilih secara permanen.
+              Tindakan ini akan menghapus {tableInstance?.getFilteredSelectedRowModel().rows.length}{' '}
+              anggota yang terpilih secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleBulkDelete}
-              variant='destructive'
-            >
+            <AlertDialogAction onClick={handleBulkDelete} variant="destructive">
               Hapus Semua
             </AlertDialogAction>
           </AlertDialogFooter>

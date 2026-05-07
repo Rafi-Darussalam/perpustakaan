@@ -93,8 +93,6 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
 
       <DialogContent 
         className="max-w-md" 
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>Tambah Peminjaman</DialogTitle>

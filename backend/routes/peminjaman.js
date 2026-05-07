@@ -6,12 +6,14 @@ const {
     getPeminjaman,
     getOverduePeminjaman,
     kembalikanBuku,
-    hapusMasalPeminjaman
+    hapusMasalPeminjaman,
+    countPeminjamanStats
 } = require("../controller/peminjamanController");
 
 router.post("/", tambahPeminjaman);
 router.get("/", getPeminjaman);
 router.get("/overdue", getOverduePeminjaman);
+router.get("/stats", countPeminjamanStats);
 router.put("/kembalikan/:id", kembalikanBuku);
 router.post("/bulk-delete", hapusMasalPeminjaman);
 

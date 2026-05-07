@@ -28,8 +28,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ListFilter } from 'lucide-react'
-import { useState } from 'react'
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ListFilter,
+  Loader2
+} from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -40,10 +48,13 @@ interface DataTableProps<TData, TValue> {
   pageIndex?: number
   pageSize?: number
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
+  onSearchChange?: (value: string) => void
+  onFilterChange?: (value: string | undefined) => void
   renderBulkActions?: (table: any) => React.ReactNode
   filterKey?: string
   filterOptions?: { label: string; value: string }[]
   initialSorting?: SortingState
+  isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -55,17 +66,30 @@ export function DataTable<TData, TValue>({
   pageIndex,
   pageSize,
   onPaginationChange,
+  onSearchChange,
+  onFilterChange,
   renderBulkActions,
   filterKey,
   filterOptions,
-  initialSorting = []
+  initialSorting = [],
+  isLoading = false
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
+  const [globalFilter, setGlobalFilter] = useState('')
+
+  const lastSearchValue = useRef('')
+  const onSearchChangeRef = useRef(onSearchChange)
+
+  useEffect(() => {
+    onSearchChangeRef.current = onSearchChange
+  }, [onSearchChange])
+
   const isManualPagination = !!onPaginationChange
+  const isManualFiltering = !!onSearchChange
 
   const table = useReactTable({
     data,
@@ -73,18 +97,21 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: isManualPagination ? undefined : getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    getFilteredRowModel: isManualFiltering ? undefined : getFilteredRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
     manualPagination: isManualPagination,
+    manualFiltering: isManualFiltering,
     pageCount: pageCount,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter,
       ...(isManualPagination
         ? {
             pagination: {
@@ -105,6 +132,20 @@ export function DataTable<TData, TValue>({
     }
   })
 
+  // Debounce search
+  useEffect(() => {
+    if (!isManualFiltering || !onSearchChangeRef.current) return
+
+    const timeout = setTimeout(() => {
+      if (globalFilter !== lastSearchValue.current) {
+        lastSearchValue.current = globalFilter
+        onSearchChangeRef.current?.(globalFilter)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeout)
+  }, [globalFilter, isManualFiltering])
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -113,8 +154,8 @@ export function DataTable<TData, TValue>({
           <div className="flex items-center py-4">
             <Input
               placeholder={searchPlaceholder}
-              value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
-              onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
+              value={globalFilter}
+              onChange={(event) => setGlobalFilter(event.target.value)}
               className="max-w-sm"
             />
           </div>
@@ -124,7 +165,7 @@ export function DataTable<TData, TValue>({
           {Object.keys(rowSelection).length > 0 && renderBulkActions && (
             <div className="flex items-center gap-2">{renderBulkActions(table)}</div>
           )}
-          
+
           {filterKey && filterOptions && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -138,9 +179,13 @@ export function DataTable<TData, TValue>({
                     key={option.value}
                     className="capitalize"
                     checked={table.getColumn(filterKey)?.getFilterValue() === option.value}
-                    onCheckedChange={(value) =>
-                      table.getColumn(filterKey)?.setFilterValue(value ? option.value : undefined)
-                    }
+                    onCheckedChange={(value) => {
+                      const newValue = value ? option.value : undefined
+                      table.getColumn(filterKey)?.setFilterValue(newValue)
+                      if (onFilterChange) {
+                        onFilterChange(newValue)
+                      }
+                    }}
                   >
                     {option.label}
                   </DropdownMenuCheckboxItem>
@@ -196,7 +241,16 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2">Memuat data...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
@@ -249,7 +303,7 @@ export function DataTable<TData, TValue>({
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
               onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
+              disabled={!table.getCanPreviousPage() || isLoading}
             >
               <span className="sr-only">Go to first page</span>
               <ChevronsLeft className="h-4 w-4" />
@@ -258,7 +312,7 @@ export function DataTable<TData, TValue>({
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              disabled={!table.getCanPreviousPage() || isLoading}
             >
               <span className="sr-only">Go to previous page</span>
               <ChevronLeft className="h-4 w-4" />
@@ -267,7 +321,7 @@ export function DataTable<TData, TValue>({
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              disabled={!table.getCanNextPage() || isLoading}
             >
               <span className="sr-only">Go to next page</span>
               <ChevronRight className="h-4 w-4" />
@@ -276,7 +330,7 @@ export function DataTable<TData, TValue>({
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
+              disabled={!table.getCanNextPage() || isLoading}
             >
               <span className="sr-only">Go to last page</span>
               <ChevronsRight className="h-4 w-4" />

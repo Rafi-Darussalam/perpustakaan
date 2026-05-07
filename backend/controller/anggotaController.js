@@ -1,4 +1,4 @@
-const { Anggota } = require("../models");
+const { Anggota, Peminjaman } = require("../models");
 const { Op } = require("sequelize");
 
 const tambahAnggota = async (req, res) => {
@@ -42,11 +42,7 @@ const getAnggota = async (req, res) => {
 
         const { count, rows } = await Anggota.findAndCountAll({
             where: {
-                [Op.or]: [
-                    { nama: { [Op.like]: `%${search}%` } },
-                    { nomor_telepon: { [Op.like]: `%${search}%` } },
-                    { email: { [Op.like]: `%${search}%` } },
-                ],
+                nama: { [Op.like]: `%${search}%` },
             },
             limit: limit,
             offset: offset,
@@ -128,6 +124,21 @@ const deleteAnggota = async (req, res) => {
             });
         }
 
+        // Cek apakah anggota memiliki pinjaman aktif
+        const activeLoans = await Peminjaman.count({
+            where: {
+                anggotaId: id,
+                status: 'Dipinjam'
+            }
+        });
+
+        if (activeLoans > 0) {
+            return res.status(400).json({
+                status: "error",
+                message: "Tidak dapat menghapus anggota yang masih memiliki pinjaman aktif",
+            });
+        }
+
         await anggota.destroy();
 
         return res.status(200).json({
@@ -151,6 +162,21 @@ const deleteAnggotaBulk = async (req, res) => {
             return res.status(400).json({
                 status: "error",
                 message: "ID anggota tidak valid atau kosong",
+            });
+        }
+
+        // Cek apakah ada anggota yang memiliki pinjaman aktif
+        const activeLoans = await Peminjaman.count({
+            where: {
+                anggotaId: { [Op.in]: ids },
+                status: 'Dipinjam'
+            }
+        });
+
+        if (activeLoans > 0) {
+            return res.status(400).json({
+                status: "error",
+                message: "Beberapa anggota yang dipilih masih memiliki pinjaman aktif dan tidak dapat dihapus",
             });
         }
 
