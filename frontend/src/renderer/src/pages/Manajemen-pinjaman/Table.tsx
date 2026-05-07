@@ -1,6 +1,6 @@
 import { DataTable } from '@renderer/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, MoreHorizontal, Loader2 } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
