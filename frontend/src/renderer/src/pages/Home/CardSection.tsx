@@ -27,7 +27,7 @@ export default function HomeCardSection() {
         axios.get(`${ANGGOTA_API_URL}/count`),
         axios.get(`${PEMINJAMAN_API_URL}/stats`)
       ])
-      
+
       setStats({
         totalBuku: bukuRes.data.count,
         totalAnggota: anggotaRes.data.count,

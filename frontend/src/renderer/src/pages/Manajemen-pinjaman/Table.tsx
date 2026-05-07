@@ -262,7 +262,7 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
         pageIndex={pagination.pageIndex}
         pageSize={pagination.pageSize}
         onPaginationChange={setPagination}
-        initialSorting={[{ id: 'peminjam', desc: false }]}
+        initialSorting={[]}
         filterKey="status"
         filterOptions={[
           { label: 'Dipinjam', value: 'Dipinjam' },

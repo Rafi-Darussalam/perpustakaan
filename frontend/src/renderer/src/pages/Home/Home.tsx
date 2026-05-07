@@ -2,6 +2,7 @@ import { useEffect, lazy, useState } from 'react'
 import HomeCardSection from './CardSection'
 import { Suspense } from 'react'
 import ChartLoading from './ChartLoading'
+import RecentTable from './RecentTable'
 
 const HomeChart = lazy(() => import('./Chart'))
 
@@ -23,6 +24,7 @@ export default function Home() {
       ) : (
         <ChartLoading />
       )}
+      <RecentTable />
     </div>
   )
 }

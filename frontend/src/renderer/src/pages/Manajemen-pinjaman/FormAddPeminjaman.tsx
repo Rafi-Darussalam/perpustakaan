@@ -134,16 +134,20 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
                           onChange={(e) => setAnggotaSearch(e.target.value)}
                         />
                       </div>
-                      <div className="max-h-[200px] overflow-y-auto p-1">
+                      <div 
+                        className="max-h-[200px] overflow-y-auto p-1"
+                        onWheel={(e) => e.stopPropagation()}
+                      >
                         {anggotaList.length === 0 ? (
                           <div className="p-2 text-sm text-center text-muted-foreground">Tidak ditemukan</div>
                         ) : (
                           anggotaList.map((item) => (
-                            <button
+                            <div
                               key={item.id}
-                              type="button"
+                              role="button"
+                              tabIndex={0}
                               className={cn(
-                                "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
                                 field.value === item.id && "bg-accent text-accent-foreground"
                               )}
                               onClick={() => {
@@ -151,9 +155,16 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
                                 setAnggotaSearch(item.nama)
                                 setAnggotaOpen(false)
                               }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  field.onChange(item.id)
+                                  setAnggotaSearch(item.nama)
+                                  setAnggotaOpen(false)
+                                }
+                              }}
                             >
                               {item.nama}
-                            </button>
+                            </div>
                           ))
                         )}
                       </div>
@@ -197,7 +208,10 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
                           onChange={(e) => setBukuSearch(e.target.value)}
                         />
                       </div>
-                      <div className="max-h-[200px] overflow-y-auto p-1">
+                      <div 
+                        className="max-h-[200px] overflow-y-auto p-1"
+                        onWheel={(e) => e.stopPropagation()}
+                      >
                         {bukuList.filter(b => !b.status || b.status.toLowerCase() === 'tersedia').length === 0 ? (
                           <div className="p-2 text-sm text-center text-muted-foreground">
                             {bukuList.length > 0 ? "Buku tidak tersedia (Sedang dipinjam/Rusak)" : "Tidak ditemukan"}
@@ -205,23 +219,31 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
                         ) : (
                           bukuList
                             .filter(b => !b.status || b.status.toLowerCase() === 'tersedia')
-                            .map((item) => (
-                              <button
-                                key={item.id}
-                                type="button"
-                                className={cn(
-                                  "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                                  field.value === item.id && "bg-accent text-accent-foreground"
-                                )}
-                                onClick={() => {
-                                  field.onChange(item.id)
-                                  setBukuSearch(item.judul)
-                                  setBukuOpen(false)
-                                }}
-                              >
-                                {item.judul}
-                              </button>
-                            ))
+                              .map((item) => (
+                                <div
+                                  key={item.id}
+                                  role="button"
+                                  tabIndex={0}
+                                  className={cn(
+                                    "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                    field.value === item.id && "bg-accent text-accent-foreground"
+                                  )}
+                                  onClick={() => {
+                                    field.onChange(item.id)
+                                    setBukuSearch(item.judul)
+                                    setBukuOpen(false)
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      field.onChange(item.id)
+                                      setBukuSearch(item.judul)
+                                      setBukuOpen(false)
+                                    }
+                                  }}
+                                >
+                                  {item.judul}
+                                </div>
+                              ))
                         )}
                       </div>
                     </div>

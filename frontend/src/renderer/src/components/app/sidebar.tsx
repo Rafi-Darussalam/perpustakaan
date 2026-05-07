@@ -38,7 +38,7 @@ export function SidebarApp({ children }) {
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar />
-        <main className='w-full'>
+        <main className='flex-1 min-w-0 flex flex-col'>
           <div className='top-bar w-full sticky top-0 left-0 h-9 flex justify-between items-center border-b border-sidebar-border bg-background'>
             <div className='btn-top'>
               <SidebarTrigger/>
@@ -56,8 +56,8 @@ export function SidebarApp({ children }) {
               </Button>
             </div>
           </div>
-          <div className='h-[calc(100vh-2.25rem)] overflow-y-hidden'>
-            <div className='h-full overflow-y-auto max-w-[1400px]'>
+          <div className='h-[calc(100vh-2.25rem)] overflow-y-hidden w-full min-w-0'>
+            <div className='h-full overflow-y-auto max-w-[1400px] w-full'>
               { children }
             </div>
           </div>
