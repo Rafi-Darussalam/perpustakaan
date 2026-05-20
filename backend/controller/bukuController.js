@@ -1,4 +1,4 @@
-const { Buku, Peminjaman } = require("../models");
+const { Buku, Peminjaman, Rating } = require("../models");
 
 const tambahBuku = async (req, res) => {
     try {
@@ -55,11 +55,35 @@ const getBuku = async (req, res) => {
             limit: limit,
             offset: offset,
             order: [["createdAt", "DESC"]],
+            include: [
+                {
+                    model: Rating,
+                    as: "ratings",
+                    attributes: ["nilai"],
+                }
+            ],
+            distinct: true,
+        });
+
+        const booksWithRatings = rows.map((buku) => {
+            const ratings = buku.ratings || [];
+            const ratingCount = ratings.length;
+            const ratingAverage = ratingCount > 0 
+                ? ratings.reduce((sum, r) => sum + r.nilai, 0) / ratingCount 
+                : 0;
+
+            const bukuJson = buku.toJSON();
+            delete bukuJson.ratings; // Remove ratings relation list from json to keep response clean
+            return {
+                ...bukuJson,
+                rating_average: ratingAverage,
+                rating_count: ratingCount,
+            };
         });
 
         return res.status(200).json({
             status: "success",
-            data: rows,
+            data: booksWithRatings,
             pagination: {
                 totalItems: count,
                 totalPages: Math.ceil(count / limit),

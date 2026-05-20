@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       Buku.hasMany(models.Peminjaman, { foreignKey: 'bukuId', as: 'peminjaman' });
+      Buku.hasMany(models.Rating, { foreignKey: 'bukuId', as: 'ratings' });
     }
   }
   Buku.init({
@@ -18,6 +19,8 @@ module.exports = (sequelize, DataTypes) => {
     penulis: DataTypes.STRING,
     kategori: DataTypes.STRING,
     status: DataTypes.STRING,
+    rating_average: DataTypes.FLOAT,
+    rating_count: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'Buku',

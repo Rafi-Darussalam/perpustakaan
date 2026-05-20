@@ -67,6 +67,7 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
   const [returnId, setReturnId] = useState<number | null>(null)
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
   const [returnCondition, setReturnCondition] = useState<'utuh' | 'rusak'>('utuh')
+  const [returnRating, setReturnRating] = useState<string>('0')
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [idsToDelete, setIdsToDelete] = useState<number[]>([])
 
@@ -91,11 +92,13 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
     }
   }
 
-  const handleKembalikan = async (id: number, kondisi: 'utuh' | 'rusak') => {
+  const handleKembalikan = async (id: number, kondisi: 'utuh' | 'rusak', rating: string) => {
     try {
-      await axios.put(`${PEMINJAMAN_API_URL}/kembalikan/${id}`, { kondisi })
+      await axios.put(`${PEMINJAMAN_API_URL}/kembalikan/${id}`, { kondisi, rating: parseInt(rating) })
       toast.success(`Buku berhasil dikembalikan (${kondisi})`)
       setIsReturnDialogOpen(false)
+      setReturnRating('0')
+      setReturnCondition('utuh')
       fetchData()
     } catch (error) {
       console.error('Kembalikan error:', error)
@@ -183,11 +186,11 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
         cell: ({ row }) => {
           const status = (row.getValue('status') as string) || ''
           const variants: Record<string, string> = {
-            dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-white',
-            dikembalikan: 'bg-green-500 hover:bg-green-600 text-white',
-            rusak: 'bg-red-500 hover:bg-red-600 text-white'
+            dipinjam: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-400 dark:hover:bg-yellow-900/60 border-yellow-200 dark:border-yellow-900/50',
+            dikembalikan: 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-400 dark:hover:bg-green-900/60 border-green-200 dark:border-green-900/50',
+            rusak: 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60 border-red-200 dark:border-red-900/50'
           }
-          const variantClass = variants[status.toLowerCase()] || 'bg-blue-500 text-white'
+          const variantClass = variants[status.toLowerCase()] || 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/60'
           return <Badge className={variantClass}>{status}</Badge>
         }
       },
@@ -209,6 +212,8 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
                   <DropdownMenuItem
                     onClick={() => {
                       setReturnId(pinjam.id)
+                      setReturnRating('0')
+                      setReturnCondition('utuh')
                       setIsReturnDialogOpen(true)
                     }}
                   >
@@ -326,11 +331,30 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="rating">Rating Buku (Opsional)</Label>
+              <Select
+                value={returnRating}
+                onValueChange={setReturnRating}
+              >
+                <SelectTrigger id="rating" className="w-full">
+                  <SelectValue placeholder="Beri rating..." />
+                </SelectTrigger>
+                <SelectContent className="w-[--radix-select-trigger-width]">
+                  <SelectItem value="0">Tidak Memberi Rating</SelectItem>
+                  <SelectItem value="1">1 - Sangat Buruk</SelectItem>
+                  <SelectItem value="2">2 - Buruk</SelectItem>
+                  <SelectItem value="3">3 - Cukup</SelectItem>
+                  <SelectItem value="4">4 - Baik</SelectItem>
+                  <SelectItem value="5">5 - Sangat Baik</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => returnId && handleKembalikan(returnId, returnCondition)}
+              onClick={() => returnId && handleKembalikan(returnId, returnCondition, returnRating)}
             >
               Konfirmasi
             </AlertDialogAction>

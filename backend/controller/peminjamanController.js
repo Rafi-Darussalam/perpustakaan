@@ -1,4 +1,4 @@
-const { Peminjaman, Anggota, Buku, sequelize } = require("../models");
+const { Peminjaman, Anggota, Buku, Rating, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
 const tambahPeminjaman = async (req, res) => {
@@ -120,7 +120,7 @@ const getOverduePeminjaman = async (req, res) => {
 const kembalikanBuku = async (req, res) => {
   try {
     const { id } = req.params;
-    const { kondisi } = req.body; // 'utuh' atau 'rusak'
+    const { kondisi, rating } = req.body; // 'utuh' atau 'rusak'
 
     const peminjaman = await Peminjaman.findByPk(id);
 
@@ -137,18 +137,28 @@ const kembalikanBuku = async (req, res) => {
       tanggal_kembali: new Date(),
     });
 
-    // Update status buku berdasarkan kondisi
-    if (kondisi === "rusak") {
-      await Buku.update(
-        { status: "Rusak" },
-        { where: { id: peminjaman.bukuId } },
-      );
-    } else {
-      await Buku.update(
-        { status: "Tersedia" },
-        { where: { id: peminjaman.bukuId } },
-      );
+    const buku = await Buku.findByPk(peminjaman.bukuId);
+    let newRatingCount = buku.rating_count || 0;
+    let newRatingAverage = buku.rating_average || 0;
+
+    if (rating && rating > 0 && rating <= 5) {
+      await Rating.create({
+        bukuId: peminjaman.bukuId,
+        nilai: Number(rating),
+      });
+
+      newRatingAverage =
+        (newRatingAverage * newRatingCount + Number(rating)) /
+        (newRatingCount + 1);
+      newRatingCount += 1;
     }
+
+    // Update status buku berdasarkan kondisi dan update rating
+    await buku.update({
+      status: kondisi === "rusak" ? "Rusak" : "Tersedia",
+      rating_average: newRatingAverage,
+      rating_count: newRatingCount,
+    });
 
     return res.status(200).json({
       status: "success",

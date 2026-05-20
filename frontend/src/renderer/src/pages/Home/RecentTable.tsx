@@ -13,7 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 
 type Peminjaman = {
   id: number
@@ -50,11 +52,14 @@ export default function RecentTable() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className='flex justify-between items-center'>
         <div>
           <CardTitle>Aktivitas Terbaru</CardTitle>
           <CardDescription>Transaksi peminjaman terakhir</CardDescription>
         </div>
+        <NavLink to="/manajemen-pinjaman">
+          <Button> <Eye /> Lihat Semua</Button>
+        </NavLink>
       </CardHeader>
       <CardContent className="p-0">
         {loading ? (
@@ -70,7 +75,7 @@ export default function RecentTable() {
                   <TableHead>Peminjam</TableHead>
                   <TableHead>Buku</TableHead>
                   <TableHead>Tgl Pinjam</TableHead>
-                  <TableHead className="text-right pr-6">Status</TableHead>
+                  <TableHead className="text-left pr-6">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -83,15 +88,15 @@ export default function RecentTable() {
                       <TableCell>
                         {format(new Date(item.tanggal_pinjam), 'dd MMM yyyy', { locale: id })}
                       </TableCell>
-                      <TableCell className="text-right pr-6">
+                      <TableCell className="text-left pr-6">
                         <Badge
                           variant="secondary"
                           className={
                             item.status.toLowerCase() === 'dipinjam'
-                              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-400 dark:hover:bg-yellow-900/60 border-yellow-200 dark:border-yellow-900/50'
                               : item.status.toLowerCase() === 'dikembalikan'
-                                ? 'bg-green-500 text-white hover:bg-green-600'
-                                : 'bg-red-500 text-white hover:bg-red-600'
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-400 dark:hover:bg-green-900/60 border-green-200 dark:border-green-900/50'
+                                : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60 border-red-200 dark:border-red-900/50'
                           }
                         >
                           {item.status}

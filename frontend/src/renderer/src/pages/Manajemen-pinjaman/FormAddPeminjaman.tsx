@@ -30,6 +30,12 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
   const [bukuSearch, setBukuSearch] = useState('')
   const [anggotaOpen, setAnggotaOpen] = useState(false)
   const [bukuOpen, setBukuOpen] = useState(false)
+  const [anggotaPage, setAnggotaPage] = useState(1)
+  const [anggotaHasMore, setAnggotaHasMore] = useState(true)
+  const [bukuPage, setBukuPage] = useState(1)
+  const [bukuHasMore, setBukuHasMore] = useState(true)
+  const [anggotaLoading, setAnggotaLoading] = useState(false)
+  const [bukuLoading, setBukuLoading] = useState(false)
 
   const {
     control,
@@ -44,29 +50,93 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
     }
   })
 
-  // Fetch Anggota with search
+  // Fetch Anggota with search & pagination
   useEffect(() => {
+    if (!open) return
+    setAnggotaLoading(true)
+    const source = axios.CancelToken.source()
     const delayDebounceFn = setTimeout(() => {
-      if (open) {
-        axios.get(ANGGOTA_API_URL, { params: { search: anggotaSearch, limit: 10 } })
-          .then(res => setAnggotaList(res.data.data))
-          .catch(err => console.error(err))
-      }
+      axios.get(ANGGOTA_API_URL, { 
+        params: { search: anggotaSearch, limit: 10, page: anggotaPage },
+        cancelToken: source.token
+      })
+      .then(res => {
+        if (anggotaPage === 1) {
+          setAnggotaList(res.data.data)
+        } else {
+          setAnggotaList(prev => {
+            const existingIds = new Set(prev.map(p => p.id))
+            const newItems = res.data.data.filter((item: any) => !existingIds.has(item.id))
+            return [...prev, ...newItems]
+          })
+        }
+        setAnggotaHasMore(res.data.pagination.currentPage < res.data.pagination.totalPages)
+      })
+      .catch(err => { if (!axios.isCancel(err)) console.error(err) })
+      .finally(() => setAnggotaLoading(false))
     }, 300)
-    return () => clearTimeout(delayDebounceFn)
-  }, [anggotaSearch, open])
+    return () => {
+      clearTimeout(delayDebounceFn)
+      source.cancel()
+    }
+  }, [anggotaSearch, anggotaPage, open])
 
-  // Fetch Buku with search
+  // Fetch Buku with search & pagination
   useEffect(() => {
+    if (!open) return
+    setBukuLoading(true)
+    const source = axios.CancelToken.source()
     const delayDebounceFn = setTimeout(() => {
-      if (open) {
-        axios.get(BUKU_API_URL, { params: { search: bukuSearch, limit: 10 } })
-          .then(res => setBukuList(res.data.data))
-          .catch(err => console.error(err))
-      }
+      axios.get(BUKU_API_URL, { 
+        params: { search: bukuSearch, limit: 10, page: bukuPage },
+        cancelToken: source.token
+      })
+      .then(res => {
+        if (bukuPage === 1) {
+          setBukuList(res.data.data)
+        } else {
+          setBukuList(prev => {
+            const existingIds = new Set(prev.map(p => p.id))
+            const newItems = res.data.data.filter((item: any) => !existingIds.has(item.id))
+            return [...prev, ...newItems]
+          })
+        }
+        setBukuHasMore(res.data.pagination.currentPage < res.data.pagination.totalPages)
+      })
+      .catch(err => { if (!axios.isCancel(err)) console.error(err) })
+      .finally(() => setBukuLoading(false))
     }, 300)
-    return () => clearTimeout(delayDebounceFn)
-  }, [bukuSearch, open])
+    return () => {
+      clearTimeout(delayDebounceFn)
+      source.cancel()
+    }
+  }, [bukuSearch, bukuPage, open])
+
+  const handleAnggotaSearch = (val: string) => {
+    setAnggotaSearch(val)
+    setAnggotaPage(1)
+  }
+
+  const handleBukuSearch = (val: string) => {
+    setBukuSearch(val)
+    setBukuPage(1)
+  }
+
+  const handleAnggotaScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget
+    if (scrollHeight - scrollTop <= clientHeight + 10 && anggotaHasMore && !anggotaLoading) {
+      setAnggotaLoading(true)
+      setAnggotaPage(prev => prev + 1)
+    }
+  }
+
+  const handleBukuScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget
+    if (scrollHeight - scrollTop <= clientHeight + 10 && bukuHasMore && !bukuLoading) {
+      setBukuLoading(true)
+      setBukuPage(prev => prev + 1)
+    }
+  }
 
   async function onSubmit(data: PeminjamanSchema) {
     try {
@@ -131,12 +201,13 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
                           className="flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm outline-none placeholder:text-muted-foreground"
                           placeholder="Cari anggota..."
                           value={anggotaSearch}
-                          onChange={(e) => setAnggotaSearch(e.target.value)}
+                          onChange={(e) => handleAnggotaSearch(e.target.value)}
                         />
                       </div>
                       <div 
                         className="max-h-[200px] overflow-y-auto p-1"
                         onWheel={(e) => e.stopPropagation()}
+                        onScroll={handleAnggotaScroll}
                       >
                         {anggotaList.length === 0 ? (
                           <div className="p-2 text-sm text-center text-muted-foreground">Tidak ditemukan</div>
@@ -205,12 +276,13 @@ export default function AddPeminjaman({ onSuccess }: { onSuccess: () => void }) 
                           className="flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm outline-none placeholder:text-muted-foreground"
                           placeholder="Cari buku..."
                           value={bukuSearch}
-                          onChange={(e) => setBukuSearch(e.target.value)}
+                          onChange={(e) => handleBukuSearch(e.target.value)}
                         />
                       </div>
                       <div 
                         className="max-h-[200px] overflow-y-auto p-1"
                         onWheel={(e) => e.stopPropagation()}
+                        onScroll={handleBukuScroll}
                       >
                         {bukuList.filter(b => !b.status || b.status.toLowerCase() === 'tersedia').length === 0 ? (
                           <div className="p-2 text-sm text-center text-muted-foreground">

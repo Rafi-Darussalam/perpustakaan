@@ -1,6 +1,6 @@
 import { DataTable } from '@renderer/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, MoreHorizontal, Loader2, Trash2 } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Loader2, Trash2, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -34,6 +34,7 @@ type Buku = {
   penulis: string
   kategori: string
   status: 'tersedia' | 'rusak' | 'dipinjam'
+  rating_average: number
   createdAt: string
 }
 
@@ -174,16 +175,29 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
         header: 'Kategori'
       },
       {
+        accessorKey: 'rating_average',
+        header: 'Rating',
+        cell: ({ row }) => {
+          const rating = parseFloat(row.getValue('rating_average')) || 0
+          return (
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span>{rating > 0 ? rating.toFixed(1) : '0.0'}</span>
+            </div>
+          )
+        }
+      },
+      {
         accessorKey: 'status',
         header: 'Status',
         cell: ({ row }) => {
           const status = (row.getValue('status') as string) || 'Tersedia'
           const variants: Record<string, string> = {
-            tersedia: 'bg-green-500 hover:bg-green-600 text-white',
-            rusak: 'bg-red-500 hover:bg-red-600 text-white',
-            dipinjam: 'bg-yellow-500 hover:bg-yellow-600 text-white'
+            tersedia: 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-400 dark:hover:bg-green-900/60 border-green-200 dark:border-green-900/50',
+            rusak: 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60 border-red-200 dark:border-red-900/50',
+            dipinjam: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-400 dark:hover:bg-yellow-900/60 border-yellow-200 dark:border-yellow-900/50'
           }
-          const variantClass = variants[status.toLowerCase()] || 'bg-blue-500 text-white'
+          const variantClass = variants[status.toLowerCase()] || 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/60'
           return <Badge className={variantClass}>{status}</Badge>
         }
       },
