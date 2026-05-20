@@ -217,7 +217,7 @@ export default function ManajemenPinjamanTable({ refreshKey }: { refreshKey: num
                       setIsReturnDialogOpen(true)
                     }}
                   >
-                    Kembalikan Buku
+                    Kembalikan
                   </DropdownMenuItem>
                 )}
                 {(pinjam.status.toLowerCase() === 'dikembalikan' ||

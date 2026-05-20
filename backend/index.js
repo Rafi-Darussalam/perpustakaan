@@ -17,7 +17,7 @@ app.use("/peminjaman", peminjamanRouter);
 
 
 app.get("/", (req, res) => {
-  res.send("Server Express Sequelize berjalan dengan baik!");
+  res.send("Server sedang berjalan jalan");
 });
 
 app.listen(port, () => {
