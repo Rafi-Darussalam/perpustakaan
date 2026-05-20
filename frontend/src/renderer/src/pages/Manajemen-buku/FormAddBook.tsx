@@ -24,8 +24,6 @@ import { BUKU_API_URL } from '@/constants/constant'
 
 export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-
   const {
     register,
     handleSubmit,
@@ -42,7 +40,6 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
 
   async function onSubmit(data: BukuSchema) {
     try {
-      setErrorMessage('')
       console.log('Hitting API:', BUKU_API_URL)
       console.log('Payload:', data)
 
@@ -71,14 +68,14 @@ export default function AddBook({ onSuccess }: { onSuccess: () => void }) {
             error.response.data?.message ||
             error.response.data?.error ||
             `Gagal menambahkan buku (Status: ${error.response.status})`
-          setErrorMessage(message)
+          toast.error(message)
         } else if (error.request) {
-          setErrorMessage('Tidak dapat terhubung ke server. Periksa koneksi Anda.')
+          toast.error('Tidak dapat terhubung ke server. Periksa koneksi Anda.')
         } else {
-          setErrorMessage(error.message || 'Terjadi kesalahan saat mengirim data')
+          toast.error(error.message || 'Terjadi kesalahan saat mengirim data')
         }
       } else {
-        setErrorMessage('Terjadi kesalahan yang tidak diketahui')
+        toast.error('Terjadi kesalahan yang tidak diketahui')
       }
     }
   }
