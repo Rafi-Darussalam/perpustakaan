@@ -51,7 +51,7 @@ export default function RecentTable() {
   }, [])
 
   return (
-    <Card>
+    <Card className='pb-0'>
       <CardHeader className='flex justify-between items-center'>
         <div>
           <CardTitle>Aktivitas Terbaru</CardTitle>
