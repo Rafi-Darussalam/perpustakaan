@@ -42,21 +42,22 @@ export const anggotaSchema = z.object({
   alamat: z.string().optional()
 })
 
-
 export type AnggotaSchema = z.infer<typeof anggotaSchema>
 
-export const peminjamanSchema = z.object({
-  anggotaId: z.number({ message: 'Peminjam wajib dipilih' }).positive({
-    message: 'Peminjam wajib dipilih'
-  }),
-  bukuId: z.number({ message: 'Buku wajib dipilih' }).positive({
-    message: 'Buku wajib dipilih'
-  }),
-  tanggal_pinjam: z.date({ message: 'Tanggal peminjaman wajib diisi' }),
-  tanggal_jatuh_tempo: z.date({ message: 'Tanggal pengembalian wajib diisi' })
-}).refine((data) => data.tanggal_jatuh_tempo > data.tanggal_pinjam, {
-  message: 'Tanggal pengembalian harus setelah tanggal peminjaman',
-  path: ['tanggal_jatuh_tempo']
-})
+export const peminjamanSchema = z
+  .object({
+    anggotaId: z.number({ message: 'Peminjam wajib dipilih' }).positive({
+      message: 'Peminjam wajib dipilih'
+    }),
+    bukuId: z.number({ message: 'Buku wajib dipilih' }).positive({
+      message: 'Buku wajib dipilih'
+    }),
+    tanggal_pinjam: z.date({ message: 'Tanggal peminjaman wajib diisi' }),
+    tanggal_jatuh_tempo: z.date({ message: 'Tanggal pengembalian wajib diisi' })
+  })
+  .refine((data) => data.tanggal_jatuh_tempo > data.tanggal_pinjam, {
+    message: 'Tanggal pengembalian harus setelah tanggal peminjaman',
+    path: ['tanggal_jatuh_tempo']
+  })
 
 export type PeminjamanSchema = z.infer<typeof peminjamanSchema>

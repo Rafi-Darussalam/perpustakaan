@@ -50,7 +50,7 @@ interface DataTableProps<TData, TValue> {
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   onSearchChange?: (value: string) => void
   onFilterChange?: (value: string | undefined) => void
-  renderBulkActions?: (table: any) => React.ReactNode
+  renderBulkActions?: (table: import('@tanstack/react-table').Table<TData>) => React.ReactNode
   filterKey?: string
   filterOptions?: { label: string; value: string }[]
   initialSorting?: SortingState

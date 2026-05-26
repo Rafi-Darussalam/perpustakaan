@@ -46,7 +46,7 @@ function CollapsibleNavItem({ icon: Icon, label, children }: CollapsibleItem) {
           </div>
         </SidebarMenuButton>
       </CollapsibleTrigger>
-      <CollapsibleContent className='data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden'>
+      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
         <div className="pt-1 flex flex-col gap-1">
           {children.map(({ to, label: childLabel }) => (
             <NavLink key={to} to={to}>

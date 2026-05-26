@@ -59,21 +59,19 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  mainWindow.webContents.session.webRequest.onHeadersReceived(
-    (details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          'Content-Security-Policy': [
-            "default-src 'self'",
-            "connect-src 'self' http://127.0.0.1:3000 http://localhost:3000 http://localhost:*",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-            "style-src 'self' 'unsafe-inline'"
-          ].join('; ')
-        }
-      })
-    }
-  )
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "connect-src 'self' http://127.0.0.1:3000 http://localhost:3000 http://localhost:*",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+          "style-src 'self' 'unsafe-inline'"
+        ].join('; ')
+      }
+    })
+  })
 
   mainWindow.loadURL('http://localhost:5173')
 
@@ -112,11 +110,8 @@ app.whenReady().then(() => {
   })
 })
 
-
-
-
 ipcMain.on('close-app', () => {
-  app.quit();
+  app.quit()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

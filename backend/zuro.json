@@ -1,0 +1,9 @@
+{
+  "name": "backend",
+  "pm": "npm",
+  "srcDir": "src",
+  "database": {
+    "orm": "drizzle",
+    "dialect": "mysql"
+  }
+}
