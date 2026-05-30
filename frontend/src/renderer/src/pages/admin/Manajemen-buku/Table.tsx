@@ -204,10 +204,10 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
         header: 'Kategori'
       },
       {
-        accessorKey: 'rating_average',
+        accessorKey: 'ratingAverage',
         header: 'Rating',
         cell: ({ row }) => {
-          const rating = parseFloat(row.getValue('rating_average')) || 0
+          const rating = parseFloat(row.getValue('ratingAverage')) || 0
           return (
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />

@@ -41,7 +41,7 @@ function AppSettingsTab() {
         <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
           <div className="flex justify-between">
             <span>Nama Aplikasi</span>
-            <span className="font-medium text-foreground">Library Management</span>
+            <span className="font-medium text-foreground">Library Mate</span>
           </div>
           <div className="flex justify-between">
             <span>Versi</span>

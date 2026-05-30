@@ -141,7 +141,7 @@ export function AppSidebar({ onLoginOpen }: { onLoginOpen: () => void }) {
                     <AvatarImage src={Logo} className="rounded-lg" />
                     <AvatarFallback>Lm</AvatarFallback>
                   </Avatar>
-                  <span>Library Management</span>
+                  <span>Library Mate</span>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>

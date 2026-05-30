@@ -31,7 +31,7 @@ type Buku = {
   kategori: string
   gambar?: string | null
   status: string
-  rating_average?: number | null
+  ratingAverage?: number | null
 }
 
 const PAGE_SIZE = 30
@@ -274,7 +274,7 @@ export default function UserBookPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2">{renderRatingStars(book.rating_average ?? 0)}</div>
+                <div className="flex items-center gap-2">{renderRatingStars(book.ratingAverage ?? 0)}</div>
                 <div
                   className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] border ${
                     book.status.toLowerCase() === 'tersedia'
