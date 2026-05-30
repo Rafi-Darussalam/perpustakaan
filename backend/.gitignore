@@ -28,4 +28,4 @@ Thumbs.db
 *.swp
 *.swo
 
-public/uploads
+uploads/*
