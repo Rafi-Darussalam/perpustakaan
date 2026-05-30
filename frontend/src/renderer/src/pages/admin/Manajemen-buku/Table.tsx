@@ -27,12 +27,14 @@ import { api } from '@/lib/axios'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import UpdateBook from './FormUpdateBook'
+import { getImageUrl } from '@/lib/utils'
 
 type Buku = {
   id: number
   judul: string
   penulis: string
   kategori: string
+  gambar?: string | null
   status: 'tersedia' | 'rusak' | 'dipinjam'
   rating_average: number
   createdAt: string
@@ -159,6 +161,25 @@ export default function ManajemenBukuTable({ refreshKey }: { refreshKey: number 
         enableSorting: false,
         enableHiding: false,
         size: 40
+      },
+      {
+        id: 'cover',
+        header: 'Cover',
+        cell: ({ row }) => {
+          const gambar = row.original.gambar
+          return gambar ? (
+            <div className="w-9 h-12 rounded overflow-hidden border bg-muted flex-shrink-0">
+              <img src={getImageUrl(gambar) || ''} alt="cover" className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-9 h-12 rounded border border-dashed bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0">
+              <span className="text-[9px] text-center leading-tight px-0.5">No img</span>
+            </div>
+          )
+        },
+        enableSorting: false,
+        enableHiding: false,
+        size: 52
       },
       {
         accessorKey: 'judul',

@@ -16,6 +16,10 @@ export const bukuSchema = z.object({
 
   kategori: z.string().min(2, {
     message: 'Kategori minimal 2 karakter'
+  }),
+
+  gambar: z.string().min(1, {
+    message: 'Cover buku wajib diunggah'
   })
 })
 

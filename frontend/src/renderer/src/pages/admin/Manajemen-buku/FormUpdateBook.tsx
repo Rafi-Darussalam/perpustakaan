@@ -11,35 +11,47 @@ import { Input } from '@/components/ui/input'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { toast } from 'sonner'
 
+import { ImagePlus, X } from 'lucide-react'
+
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { bukuSchema, type BukuSchema } from '@/schemas/schema'
 import { useState, useEffect } from 'react'
 
 import { api } from '@/lib/axios'
+import { getImageUrl } from '@/lib/utils'
 import { isAxiosError } from 'axios'
 
 type UpdateBookProps = {
   open: boolean
   setOpen: (open: boolean) => void
-  bookData: { id: number; judul: string; penulis: string; kategori: string } | null
+  bookData: {
+    id: number
+    judul: string
+    penulis: string
+    kategori: string
+    gambar?: string | null
+  } | null
   onSuccess: () => void
 }
 
 export default function UpdateBook({ open, setOpen, bookData, onSuccess }: UpdateBookProps) {
   const [errorMessage, setErrorMessage] = useState('')
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<BukuSchema>({
     resolver: zodResolver(bukuSchema),
     defaultValues: {
       judul: '',
       penulis: '',
-      kategori: ''
+      kategori: '',
+      gambar: ''
     }
   })
 
@@ -48,16 +60,55 @@ export default function UpdateBook({ open, setOpen, bookData, onSuccess }: Updat
       reset({
         judul: bookData.judul,
         penulis: bookData.penulis,
-        kategori: bookData.kategori
+        kategori: bookData.kategori,
+        gambar: bookData.gambar || ''
       })
+      setImagePreview(bookData.gambar || null)
     }
   }, [bookData, reset])
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 8 * 1024 * 1024) {
+        toast.error('Ukuran gambar maksimal 8MB')
+        return
+      }
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setImagePreview(base64String)
+        setValue('gambar', base64String)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setImagePreview(null)
+    setValue('gambar', '')
+  }
+
   async function onSubmit(data: BukuSchema) {
+    if (!bookData) return
+
     try {
       setErrorMessage('')
 
-      const response = await api.put(`/buku/${bookData.id}`, data, {
+      const payload: any = { ...data }
+
+      // Jika gambar tidak diubah (masih berupa path lama, bukan base64 baru),
+      // jangan kirim field gambar agar backend tidak memproses ulang.
+      // Jika gambar dihapus (string kosong), kirim null agar backend menghapus gambar lama.
+      if (payload.gambar) {
+        if (!payload.gambar.startsWith('data:image')) {
+          delete payload.gambar
+        }
+      } else {
+        payload.gambar = null
+      }
+
+      const response = await api.put(`/buku/${bookData.id}`, payload, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -131,6 +182,60 @@ export default function UpdateBook({ open, setOpen, bookData, onSuccess }: Updat
               {...register('kategori')}
             />
             <FieldError errors={errors.kategori ? [{ message: errors.kategori.message }] : []} />
+          </Field>
+
+          <Field aria-invalid={!!errors.gambar}>
+            <FieldLabel htmlFor="gambar-edit">Cover Buku</FieldLabel>
+            <input
+              type="file"
+              id="gambar-upload-edit"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {imagePreview ? (
+              <div className="flex gap-3 mt-1 p-3 border rounded-lg bg-muted/40">
+                <div className="relative group flex-shrink-0 w-16 rounded-md overflow-hidden border shadow-sm" style={{ height: '88px' }}>
+                  <img src={getImageUrl(imagePreview) || ''} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer rounded-md"
+                  >
+                    <X className="h-4 w-4 text-white" />
+                  </button>
+                </div>
+                <div className="flex flex-col justify-center gap-2 flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">Cover terpilih</p>
+                  <p className="text-xs text-muted-foreground">Klik ikon × pada gambar untuk menghapus</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('gambar-upload-edit')?.click()}
+                    className="w-full cursor-pointer"
+                  >
+                    <ImagePlus className="h-4 w-4 mr-2" />
+                    Ganti Gambar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => document.getElementById('gambar-upload-edit')?.click()}
+                className={`w-full mt-1 border-2 border-dashed rounded-lg p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-muted/60 ${
+                  errors.gambar
+                    ? 'border-destructive text-destructive hover:border-destructive'
+                    : 'border-border text-muted-foreground hover:border-border'
+                }`}
+              >
+                <ImagePlus className="h-7 w-7" />
+                <span className="text-sm font-medium">Klik untuk unggah cover buku</span>
+                <span className="text-xs">PNG, JPG maksimal 8MB</span>
+              </button>
+            )}
+            <FieldError errors={errors.gambar ? [{ message: errors.gambar.message }] : []} />
           </Field>
 
           <DialogFooter className="pt-2">

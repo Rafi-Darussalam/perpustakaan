@@ -22,8 +22,7 @@ import {
 
 export const description = 'An interactive area chart'
 
-import axios from 'axios'
-import { PEMINJAMAN_API_URL } from '@/constants/constant'
+import { api } from '@/lib/axios'
 
 const chartConfig = {
   peminjaman: {
@@ -42,7 +41,7 @@ export default function HomeChart() {
       try {
         setLoading(true)
         const days = timeRange === '30d' ? 30 : timeRange === '14d' ? 14 : 7
-        const response = await axios.get(`${PEMINJAMAN_API_URL}/chart`, {
+        const response = await api.get(`/peminjaman/chart`, {
           params: { days }
         })
         setData(response.data.data)

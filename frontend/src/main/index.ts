@@ -67,7 +67,8 @@ function createWindow(): void {
           "default-src 'self'",
           "connect-src 'self' http://127.0.0.1:3000 http://localhost:3000 http://localhost:*",
           "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-          "style-src 'self' 'unsafe-inline'"
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: blob: http://localhost:3000 http://127.0.0.1:3000"
         ].join('; ')
       }
     })

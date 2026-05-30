@@ -16,6 +16,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { authClient } from '@/lib/auth-client'
 import { Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Format email tidak valid' }),
@@ -38,6 +39,7 @@ function LoginForm({
   onSwitchToRegister: () => void
   onClose: () => void
 }) {
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -55,7 +57,9 @@ function LoginForm({
           onSuccess: (ctx) => {
             const token = ctx.response.headers.get('set-auth-token')
             if (token) localStorage.setItem('auth_token', token)
-            toast.success('Login berhasil! Selamat datang.')
+            localStorage.removeItem('logout_success')
+            // Login success notification removed by request
+            navigate('/', { replace: true })
             onClose()
           },
           onError: (ctx) => {
@@ -122,10 +126,7 @@ function LoginForm({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Memproses...
-                </span>
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 'Masuk'
               )}
@@ -144,6 +145,7 @@ function RegisterForm({
   onSwitchToLogin: () => void
   onClose: () => void
 }) {
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -156,12 +158,14 @@ function RegisterForm({
   async function onSubmit(data: RegisterSchema) {
     try {
       await authClient.signUp.email(
-        { name: data.name, email: data.email, password: data.password, role: 'user' },
+        { name: data.name, email: data.email, password: data.password },
         {
           onSuccess: (ctx) => {
             const token = ctx.response.headers.get('set-auth-token')
             if (token) localStorage.setItem('auth_token', token)
-            toast.success('Pendaftaran berhasil! Selamat datang.')
+            localStorage.removeItem('logout_success')
+            // Registration success notification removed by request
+            navigate('/', { replace: true })
             onClose()
           },
           onError: (ctx) => {
@@ -241,10 +245,7 @@ function RegisterForm({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Memproses...
-                </span>
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 'Daftar'
               )}

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
-import { PEMINJAMAN_API_URL } from '@/constants/constant'
+import { api } from '@/lib/axios'
 import {
   Table,
   TableBody,
@@ -21,7 +20,7 @@ type Peminjaman = {
   id: number
   anggota: { nama: string }
   buku: { judul: string }
-  tanggal_pinjam: string
+  tanggalPinjam: string
   status: string
 }
 
@@ -33,7 +32,7 @@ export default function RecentTable() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const response = await axios.get(PEMINJAMAN_API_URL, {
+        const response = await api.get('/peminjaman', {
           params: {
             limit: 10,
             page: 1
@@ -57,7 +56,7 @@ export default function RecentTable() {
           <CardTitle>Aktivitas Terbaru</CardTitle>
           <CardDescription>Transaksi peminjaman terakhir</CardDescription>
         </div>
-        <NavLink to="/manajemen-pinjaman">
+        <NavLink to="/manajemen-peminjaman">
           <Button>
             {' '}
             <Eye /> Lihat Semua
@@ -89,7 +88,7 @@ export default function RecentTable() {
                       <TableCell className="font-medium">{item.anggota.nama}</TableCell>
                       <TableCell>{item.buku.judul}</TableCell>
                       <TableCell>
-                        {format(new Date(item.tanggal_pinjam), 'dd MMM yyyy', { locale: id })}
+                        {format(new Date(item.tanggalPinjam), 'dd MMM yyyy', { locale: id })}
                       </TableCell>
                       <TableCell className="text-left pr-6">
                         <Badge

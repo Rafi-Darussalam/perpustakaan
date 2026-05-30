@@ -3,7 +3,6 @@ import { ColumnDef, Table as ReactTable } from '@tanstack/react-table'
 import { ArrowUpDown, MoreHorizontal, Trash2, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +25,7 @@ import {
 import { useState, useEffect, useMemo } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { toast } from 'sonner'
+import axios from 'axios'
 
 type User = {
   id: string
@@ -34,8 +34,6 @@ type User = {
   role: string
   createdAt: Date
 }
-
-const CONFIRM_TEXT = 'HAPUS'
 
 export default function ManajemenAnggotaTable() {
   const [data, setData] = useState<User[]>([])
@@ -52,30 +50,28 @@ export default function ManajemenAnggotaTable() {
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteUser, setDeleteUser] = useState<User | null>(null)
-  const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [tableInstance, setTableInstance] = useState<ReactTable<User> | null>(null)
-  const [bulkDeleteConfirmText, setBulkDeleteConfirmText] = useState('')
+  
+  const [countdown, setCountdown] = useState(0)
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
   const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await authClient.admin.listUsers({
-        query: {
+      const res = await axios.get(`${API_URL}/api/admin/users`, {
+        params: {
           limit: pagination.pageSize,
           offset: pagination.pageIndex * pagination.pageSize,
-          ...(search
-            ? { searchField: 'name', searchValue: search, searchOperator: 'contains' as const }
-            : {})
-        }
+          ...(search ? { searchField: 'name', searchValue: search } : {})
+        },
+        withCredentials: true
       })
-
-      if (response.data) {
-        setData(response.data.users as User[])
-        const total = response.data.total || 0
-        setPageCount(Math.ceil(total / pagination.pageSize))
-      }
+      setData(res.data.users)
+      const total = res.data.total || 0
+      setPageCount(Math.ceil(total / pagination.pageSize))
     } catch (error) {
       console.error('Error fetching users:', error)
       toast.error('Gagal memuat data anggota')
@@ -106,17 +102,14 @@ export default function ManajemenAnggotaTable() {
     if (!deleteUser) return
 
     try {
-      await authClient.admin.removeUser({
-        userId: deleteUser.id
-      })
+      await axios.post(`${API_URL}/api/admin/users/${deleteUser.id}/soft-delete`, {}, { withCredentials: true })
       toast.success(`Anggota "${deleteUser.name}" berhasil dihapus`)
       fetchData()
       setDeleteOpen(false)
       setDeleteUser(null)
-      setDeleteConfirmText('')
     } catch (error) {
       console.error('Delete error:', error)
-      toast.error(error instanceof Error ? error.message : 'Gagal menghapus anggota')
+      toast.error('Gagal menghapus anggota')
     }
   }
 
@@ -129,15 +122,18 @@ export default function ManajemenAnggotaTable() {
     if (users.length === 0) return
 
     try {
-      await Promise.all(users.map((user: User) => authClient.admin.removeUser({ userId: user.id })))
+      await axios.post(
+        `${API_URL}/api/admin/users/bulk-soft-delete`,
+        { ids: users.map(u => u.id) },
+        { withCredentials: true }
+      )
       toast.success(`${users.length} anggota berhasil dihapus`)
       tableInstance.resetRowSelection()
       fetchData()
       setBulkDeleteOpen(false)
-      setBulkDeleteConfirmText('')
     } catch (error) {
       console.error('Bulk delete error:', error)
-      toast.error(error instanceof Error ? error.message : 'Gagal menghapus anggota terpilih')
+      toast.error('Gagal menghapus anggota terpilih')
     }
   }
 
@@ -146,16 +142,29 @@ export default function ManajemenAnggotaTable() {
     setPromoteOpen(true)
   }
 
+  const startCountdown = () => {
+    setCountdown(3)
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
   const confirmDelete = (user: User) => {
     setDeleteUser(user)
-    setDeleteConfirmText('')
     setDeleteOpen(true)
+    startCountdown()
   }
 
   const confirmBulkDelete = (table: ReactTable<User>) => {
     setTableInstance(table)
-    setBulkDeleteConfirmText('')
     setBulkDeleteOpen(true)
+    startCountdown()
   }
 
   const columns: ColumnDef<User>[] = useMemo(
@@ -255,6 +264,7 @@ export default function ManajemenAnggotaTable() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem variant="destructive" onClick={() => confirmDelete(user)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Hapus anggota
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -320,36 +330,20 @@ export default function ManajemenAnggotaTable() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Single delete confirmation with verification */}
+      {/* Single delete confirmation with countdown */}
       <AlertDialog
         open={deleteOpen}
         onOpenChange={(open) => {
           setDeleteOpen(open)
-          if (!open) setDeleteConfirmText('')
+          if (!open) setCountdown(0)
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>
-                  Tindakan ini tidak dapat dibatalkan. Ini akan menghapus anggota{' '}
-                  <span className="font-semibold">{deleteUser?.name}</span> secara permanen dari
-                  database.
-                </p>
-                <p>
-                  Ketik{' '}
-                  <span className="font-mono font-semibold text-destructive">{CONFIRM_TEXT}</span>{' '}
-                  untuk mengonfirmasi.
-                </p>
-                <Input
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder={`Ketik ${CONFIRM_TEXT} di sini...`}
-                  className="mt-2"
-                />
-              </div>
+            <AlertDialogTitle>Hapus anggota?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anggota <span className="font-semibold">{deleteUser?.name}</span> akan dipindahkan ke daftar anggota yang dihapus.
+              Anggota yang dihapus tidak akan bisa masuk ke dalam sistem. Anda masih bisa memulihkannya nanti.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -357,46 +351,31 @@ export default function ManajemenAnggotaTable() {
             <AlertDialogAction
               onClick={handleDelete}
               variant="destructive"
-              disabled={deleteConfirmText !== CONFIRM_TEXT}
+              disabled={countdown > 0}
             >
-              Hapus
+              {countdown > 0 ? `Hapus (${countdown})` : 'Hapus'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bulk delete confirmation with verification */}
+      {/* Bulk delete confirmation with countdown */}
       <AlertDialog
         open={bulkDeleteOpen}
         onOpenChange={(open) => {
           setBulkDeleteOpen(open)
-          if (!open) setBulkDeleteConfirmText('')
+          if (!open) setCountdown(0)
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>
-                  Tindakan ini akan menghapus{' '}
-                  <span className="font-semibold">
-                    {tableInstance?.getFilteredSelectedRowModel().rows.length}
-                  </span>{' '}
-                  anggota yang terpilih secara permanen.
-                </p>
-                <p>
-                  Ketik{' '}
-                  <span className="font-mono font-semibold text-destructive">{CONFIRM_TEXT}</span>{' '}
-                  untuk mengonfirmasi.
-                </p>
-                <Input
-                  value={bulkDeleteConfirmText}
-                  onChange={(e) => setBulkDeleteConfirmText(e.target.value)}
-                  placeholder={`Ketik ${CONFIRM_TEXT} di sini...`}
-                  className="mt-2"
-                />
-              </div>
+            <AlertDialogTitle>Hapus anggota terpilih?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan memindahkan{' '}
+              <span className="font-semibold">
+                {tableInstance?.getFilteredSelectedRowModel().rows.length}
+              </span>{' '}
+              anggota yang terpilih ke daftar anggota yang dihapus.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -404,9 +383,9 @@ export default function ManajemenAnggotaTable() {
             <AlertDialogAction
               onClick={handleBulkDelete}
               variant="destructive"
-              disabled={bulkDeleteConfirmText !== CONFIRM_TEXT}
+              disabled={countdown > 0}
             >
-              Hapus Semua
+              {countdown > 0 ? `Hapus Semua (${countdown})` : 'Hapus Semua'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

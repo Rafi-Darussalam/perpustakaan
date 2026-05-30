@@ -14,6 +14,7 @@ export const user = mysqlTable("user", {
     image: text("image"),
     createdAt: datetime("created_at", { mode: "date" }).notNull(),
     updatedAt: datetime("updated_at", { mode: "date" }).notNull(),
+    deletedAt: datetime("deleted_at", { mode: "date" }),
 });
 
 export const session = mysqlTable("session", {

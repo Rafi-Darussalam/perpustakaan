@@ -22,7 +22,7 @@ export default function HomeCardSection() {
       setLoading(true)
       const [bukuRes, anggotaRes, pinjamRes] = await Promise.all([
         api.get('/buku/count'),
-        api.get('/anggota/count'),
+        api.get('/admin/users/count'),
         api.get('/peminjaman/stats')
       ])
 
